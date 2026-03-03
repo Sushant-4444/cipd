@@ -46,16 +46,7 @@ export default function CiPDHero({ onComplete }) {
   const [active, setActive] = useState(0);
   const [textIn, setTextIn] = useState(true);
 
-  // Fonts
-  useEffect(() => {
-    if (document.querySelector("#cipd-fonts")) return;
-    const l = document.createElement("link");
-    l.id   = "cipd-fonts";
-    l.rel  = "stylesheet";
-    l.href = "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,300;0,400;0,600;1,300&display=swap";
-    document.head.appendChild(l);
-  }, []);
-
+  // goTo — defined first so useEffects below can reference it
   const goTo = useCallback((next) => {
     if (next > SECTIONS.length - 1) { if (onComplete) onComplete(); return; }
     if (inTransit.current || next === lastIdx.current) return;
@@ -69,6 +60,16 @@ export default function CiPDHero({ onComplete }) {
       setTimeout(() => { inTransit.current = false; }, 200);
     }, 380);
   }, [onComplete]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fonts
+  useEffect(() => {
+    if (document.querySelector("#cipd-fonts")) return;
+    const l = document.createElement("link");
+    l.id   = "cipd-fonts";
+    l.rel  = "stylesheet";
+    l.href = "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,300;0,400;0,600;1,300&display=swap";
+    document.head.appendChild(l);
+  }, []);
 
   // Play video + auto-advance
   useEffect(() => {
@@ -84,7 +85,7 @@ export default function CiPDHero({ onComplete }) {
         v.pause();
       }
     });
-  }, [active]);
+  }, [active, goTo]);
 
   // Scroll / touch / keyboard
   useEffect(() => {
@@ -112,7 +113,7 @@ export default function CiPDHero({ onComplete }) {
       window.removeEventListener("touchend",   onTE);
       window.removeEventListener("keydown",    onK);
     };
-  }, []);
+  }, [goTo]);
 
   const sec    = SECTIONS[active];
   const bl     = BLOBS[active];
