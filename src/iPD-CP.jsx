@@ -97,7 +97,7 @@ export default function IPDCPSection() {
 
   const slide  = SLIDES[slideIdx];
   const accent = accentOf(slide);
-//   const localPct = clamp((prog*100 - slide.pct[0]) / (slide.pct[1] - slide.pct[0]), 0, 1);
+  const localPct = clamp((prog*100 - slide.pct[0]) / (slide.pct[1] - slide.pct[0]), 0, 1);
 
   return (
     <>
