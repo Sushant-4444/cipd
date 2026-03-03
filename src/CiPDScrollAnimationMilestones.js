@@ -108,21 +108,7 @@ export default function CiPDScrollStory() {
   const activeIdx   = SLIDES.findIndex(s => pct >= s.pct[0] && pct <= s.pct[1]);
   const safeIdx     = activeIdx === -1 ? (pct > 80 ? 4 : 0) : activeIdx;
 
-  // Within-slide progress (0–1) for sub-animations
-  const slide       = SLIDES[safeIdx];
-  const slideRange  = slide.pct[1] - slide.pct[0];
-  const slideLocal  = Math.min(1, Math.max(0, (pct - slide.pct[0]) / slideRange));
-
-  // Heading color
-  const headingStyle = slide.color === "gradient"
-    ? {
-        background: `linear-gradient(135deg, ${B.teal} 0%, ${B.purple} 50%, ${B.magenta} 100%)`,
-        WebkitBackgroundClip: "text",
-        WebkitTextFillColor: "transparent",
-        backgroundClip: "text",
-        backgroundSize: "200% 200%",
-      }
-    : { color: slide.color };
+  const slide = SLIDES[safeIdx];
 
   if (!mounted) return null;
 

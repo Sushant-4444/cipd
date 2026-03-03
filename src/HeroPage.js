@@ -1,17 +1,10 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 const VIDEOS = [
   { src: "/videos/4.mp4"   },
   { src: "/videos/2.mp4" },
   { src: "/videos/3.mp4"    },
 ];
-
-const B = {
-  teal:    "#00BFA5",
-  purple:  "#7B2D8B",
-  magenta: "#E91E8C",
-  navy:    "#0A0A16",
-};
 
 const SECTIONS = [
   {
@@ -63,7 +56,7 @@ export default function CiPDHero({ onComplete }) {
     document.head.appendChild(l);
   }, []);
 
-  function goTo(next) {
+  const goTo = useCallback((next) => {
     if (next > SECTIONS.length - 1) { if (onComplete) onComplete(); return; }
     if (inTransit.current || next === lastIdx.current) return;
     inTransit.current = true;
@@ -75,7 +68,7 @@ export default function CiPDHero({ onComplete }) {
       accDelta.current = 0;
       setTimeout(() => { inTransit.current = false; }, 200);
     }, 380);
-  }
+  }, [onComplete]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Play video + auto-advance
   useEffect(() => {
