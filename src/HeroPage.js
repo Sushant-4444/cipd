@@ -145,10 +145,10 @@ export default function CiPDHero({ onComplete }) {
         )}
 
         <header className="h-bar">
-          <div className="h-wm">
+          {/* <div className="h-wm">
             <SBlob />
             <span className="h-wm-text">Ci<span className="h-acc">P</span>D</span>
-          </div>
+          </div> */}
           <span className="h-inst">IIIT Delhi</span>
         </header>
 
