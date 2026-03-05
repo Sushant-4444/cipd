@@ -46,19 +46,19 @@ const TRACES = [
 const TESTIMONIALS = [
   {
     src:   "/testimonials/segment_1.mp4",   // ← replace with real path
-    name:  "Arjun Mehta",
+    name:  "Vivek Dagar",
     batch: "Cohort 01 · 2024",
     poster:"/testimonials/segment_1.png", // ← optional thumbnail
   },
   {
     src:   "/testimonials/segment_2.mp4",
-    name:  "Priya Sharma",
+    name:  "Yash Agarwal",
     batch: "Cohort 01 · 2024",
     poster:"/testimonials/segment_2.png",
   },
   {
     src:   "/testimonials/segment_4.mp4",
-    name:  "Rohan Das",
+    name:  "Theajus Prakash",
     batch: "Cohort 01 · 2024",
     poster:"/testimonials/segment_4.png",
   },
