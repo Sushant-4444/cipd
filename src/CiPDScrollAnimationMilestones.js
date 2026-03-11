@@ -15,7 +15,7 @@ const B = {
 // ─── Scroll sequence data (5 slides × 20% each) ──────────────────────────────
 const SLIDES = [
   {
-    pct:     [0, 20],
+    pct:     [0, 19.99],
     isTitle: true,
     heading: "What is\nCiPD?",
     color:   "gradient",
@@ -25,7 +25,7 @@ const SLIDES = [
     ipdcp:   false,
   },
   {
-    pct:     [21, 40],
+    pct:     [20, 39.99],
     heading: "THE HUB OF\nINNOVATION",
     color:   B.teal,
     body:    "The Centre for Intelligent Product Development (CiPD) at IIIT Delhi is where independent ideas transform into advanced market solutions.",
@@ -34,7 +34,7 @@ const SLIDES = [
     ipdcp:   false,
   },
   {
-    pct:     [41, 60],
+    pct:     [40, 59.99],
     heading: "MAKING INDIA A\nPRODUCT NATION",
     color:   B.magenta,
     body:    "We are on a mission to nurture a sustainable ecosystem that increases the pace of global product development.",
@@ -43,7 +43,7 @@ const SLIDES = [
     ipdcp:   false,
   },
   {
-    pct:     [61, 80],
+    pct:     [60, 79.99],
     heading: "WORLD-CLASS\nMENTORSHIP",
     color:   B.white,
     body:    "Work at the intersection of IIIT Delhi's elite faculty and top-tier industry leaders.",
@@ -52,7 +52,7 @@ const SLIDES = [
     ipdcp:   false,
   },
   {
-    pct:     [81, 100],
+    pct:     [80, 100],
     heading: "A PATHWAY\nTO MASTERY",
     color:   "gradient",
     body:    "All this expertise culminates into one rigorous, high-stakes experience...",
@@ -93,8 +93,8 @@ export default function CiPDScrollStory({ onComplete }) {
       const total    = el.offsetHeight - window.innerHeight;
       const scrolled = -rect.top;
 
-      // Handle start of scroll
-      if (rect.top > 0) {
+      // Handle start of scroll (2px tolerance avoids sub-pixel dead zone)
+      if (rect.top > 2) {
         setProgress(0);
         setAtTop(window.scrollY < 10);
         return;
@@ -105,8 +105,8 @@ export default function CiPDScrollStory({ onComplete }) {
       setProgress(p);
       setAtTop(window.scrollY < 10);
 
-      // Trigger onComplete once at end
-      if (p >= 0.99 && onComplete && !completedRef.current) {
+      // Trigger onComplete once last slide is fully visible (was 0.99 → too late)
+      if (p >= 0.94 && onComplete && !completedRef.current) {
         completedRef.current = true;
         onComplete();
       }
@@ -120,7 +120,13 @@ export default function CiPDScrollStory({ onComplete }) {
   // Determine active slide
   const pct         = progress * 100;
   const activeIdx   = SLIDES.findIndex(s => pct >= s.pct[0] && pct <= s.pct[1]);
-  const safeIdx     = activeIdx === -1 ? (pct > 80 ? 4 : 0) : activeIdx;
+  // Fallback: nearest slide by midpoint (should rarely trigger with continuous ranges)
+  const safeIdx     = activeIdx === -1
+    ? SLIDES.reduce((best, s, i) => {
+        const mid = (s.pct[0] + s.pct[1]) / 2;
+        return Math.abs(pct - mid) < Math.abs(pct - (SLIDES[best].pct[0] + SLIDES[best].pct[1]) / 2) ? i : best;
+      }, 0)
+    : activeIdx;
   const slide = SLIDES[safeIdx];
 
   if (!mounted) return null;
@@ -345,7 +351,7 @@ function styles(B) { return `
     50%     { background-position: 100% 50%; }
   }
 
-  .ss-outer  { position: relative; width: 100%; }
+  .ss-outer  { position: relative; width: 100%; background: ${B.charcoal}; }
   .ss-sticky {
     position: sticky; top: 0;
     height: 100vh; width: 100%;
@@ -388,24 +394,24 @@ function styles(B) { return `
   .ss-title-heading { font-family: 'Montserrat', sans-serif; font-size: clamp(60px, 10vw, 140px); font-weight: 900; line-height: .9; letter-spacing: -.02em; color: #fff; margin: 0; white-space: pre-line; }
   .ss-title-accent { background: linear-gradient(135deg, #00BFA5 0%, #7B2D8B 50%, #E91E8C 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
   .ss-title-line { width: 64px; height: 3px; border-radius: 2px; background: linear-gradient(90deg, #00BFA5, #E91E8C); margin: 28px 0 20px; }
-  .ss-title-sub { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .35em; text-transform: uppercase; color: rgba(255,255,255,.28); font-weight: 300; margin: 0; display: flex; align-items: center; gap: 10px; }
+  .ss-title-sub { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .35em; text-transform: uppercase; color: rgba(255,255,255,.42); font-weight: 300; margin: 0; display: flex; align-items: center; gap: 10px; }
   .ss-title-sub::before { content: ''; display: inline-block; width: 20px; height: 1px; background: rgba(255,255,255,.25); }
 
   /* ── Typography: Content Slides ── */
   .ss-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .42em; font-weight: 300; text-transform: uppercase; margin-bottom: 18px; transition: color .4s; }
   .ss-heading { font-family: 'Montserrat', sans-serif; font-size: clamp(36px, 6vw, 92px); font-weight: 900; line-height: .93; letter-spacing: -.01em; white-space: pre-line; margin: 0; max-width: 680px; }
   .ss-line { height: 3px; width: 56px; border-radius: 2px; margin: 20px 0 24px; transform-origin: left; animation: ssLineGrow .5s cubic-bezier(.16,1,.3,1) both; }
-  .ss-body { font-family: 'Barlow', sans-serif; font-size: clamp(15px, 1.4vw, 19px); font-weight: 300; color: rgba(255,255,255,.72); line-height: 1.75; max-width: 560px; margin: 0 0 16px; }
+  .ss-body { font-family: 'Barlow', sans-serif; font-size: clamp(15px, 1.6vw, 21px); font-weight: 300; color: rgba(255,255,255,.78); line-height: 1.78; max-width: 580px; margin: 0 0 16px; }
   
   /* ── Subtext & iPD-CP Logic ── */
-  .ss-sub { font-family: 'JetBrains Mono', monospace; font-size: clamp(11px, 1vw, 13px); font-weight: 300; color: rgba(255,255,255,.38); line-height: 1.7; max-width: 540px; letter-spacing: .04em; border-left: 2px solid rgba(255,255,255,.1); padding-left: 14px; margin: 0; }
-  .ss-sub-ipdcp { border-left: none; padding-left: 0; color: rgba(255,255,255,.5); font-size: clamp(12px, 1.1vw, 15px); }
+  .ss-sub { font-family: 'JetBrains Mono', monospace; font-size: clamp(11px, 1.1vw, 15px); font-weight: 300; color: rgba(255,255,255,.55); line-height: 1.75; max-width: 560px; letter-spacing: .04em; border-left: 2px solid rgba(255,255,255,.15); padding-left: 14px; margin: 0; }
+  .ss-sub-ipdcp { border-left: none; padding-left: 0; color: rgba(255,255,255,.62); font-size: clamp(12px, 1.2vw, 16px); }
   
   .ss-ipdcp { display: inline; font-family: 'Montserrat', sans-serif; font-weight: 900; letter-spacing: .08em; font-size: 1.15em; background: linear-gradient(135deg, ${B.teal}, ${B.purple}, ${B.magenta}); background-size: 200% 200%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: ssIpdcpPulse 2.6s ease-in-out infinite, ssIpdcpShift 4s ease infinite; cursor: default; }
   .ss-ipdcp-hint { display:flex; align-items:center; gap:10px; margin-top:28px; }
   .ss-hint-dot   { display:inline-block; width:5px; height:5px; border-radius:50%; background:linear-gradient(135deg,${B.teal},${B.magenta}); animation:ssDotBlink 1.6s ease-in-out infinite; }
   .ss-hint-dot:last-child { animation-delay:.8s; }
-  .ss-hint-text  { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.35em; text-transform:uppercase; color:rgba(255,255,255,.28); font-weight:300; }
+  .ss-hint-text  { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.35em; text-transform:uppercase; color:rgba(255,255,255,.42); font-weight:300; }
 
   /* ── Hints ── */
   .ss-scroll-hint { position:absolute; bottom:40px; right:clamp(16px,3vw,48px); z-index:10; display:flex; flex-direction:column; align-items:center; gap:6px; transition:opacity .6s ease; }

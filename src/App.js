@@ -18,7 +18,8 @@ export default function App() {
     if (cooldown.current) return;
     cooldown.current = true;
     setPhaseIdx(i => Math.min(i + 1, PHASES.length - 1));
-    window.scrollTo({ top: 0 });
+    // Delay scrollTo until React has re-rendered to avoid old listener flash
+    requestAnimationFrame(() => { window.scrollTo({ top: 0 }); });
     setTimeout(() => { cooldown.current = false; }, 1000);
   }
 
@@ -26,27 +27,36 @@ export default function App() {
     if (cooldown.current) return;
     cooldown.current = true;
     setPhaseIdx(i => Math.max(i - 1, 0));
-    window.scrollTo({ top: 0 });
+    requestAnimationFrame(() => { window.scrollTo({ top: 0 }); });
     setTimeout(() => { cooldown.current = false; }, 1000);
   }
 
   // ── Scroll-up-at-top → go back ──
   useEffect(() => {
     if (isHero) return;
+
+    let armed = false;
+    const armTimer = setTimeout(() => { armed = true; }, 800);
+
     function onWheel(e) {
-      if (cooldown.current) return;
-      if (window.scrollY === 0 && e.deltaY < -30) goPrev();
+      if (!armed || cooldown.current) return;
+      if (window.scrollY <= 2 && e.deltaY < -30) goPrev();
     }
     let lastTY = 0;
-    function onTouchStart(e) { lastTY = e.touches[0].clientY; }
+    let touchStartTime = 0;
+    function onTouchStart(e) { lastTY = e.touches[0].clientY; touchStartTime = Date.now(); }
     function onTouchEnd(e) {
+      if (!armed || cooldown.current) return;
       const dy = e.changedTouches[0].clientY - lastTY;
-      if (window.scrollY === 0 && dy > 60) goPrev();
+      const elapsed = Date.now() - touchStartTime;
+      const velocity = Math.abs(dy) / Math.max(elapsed, 1) * 1000;
+      if (window.scrollY <= 2 && dy > 50 && velocity > 200) goPrev();
     }
     window.addEventListener("wheel",      onWheel,      { passive: true });
     window.addEventListener("touchstart", onTouchStart, { passive: true });
     window.addEventListener("touchend",   onTouchEnd,   { passive: true });
     return () => {
+      clearTimeout(armTimer);
       window.removeEventListener("wheel",      onWheel);
       window.removeEventListener("touchstart", onTouchStart);
       window.removeEventListener("touchend",   onTouchEnd);
@@ -61,16 +71,10 @@ export default function App() {
 
   // ── Shared "Apply Now" handler ──
   // Used by both Navbar ghost CTA and FloatingCTA filled button
+  const APPLY_URL = "https://docs.google.com/forms/d/e/1FAIpQLScnTQdnzGalnaqckHoUXKlMnYAXiHdn2qpATLaJCVtRCjMCOQ/viewform";
+
   function handleApply() {
-    if (phase === "ipdcp") {
-      window.open("#apply", "_blank", "noopener"); // ← swap for real URL
-      return;
-    }
-    if (cooldown.current) return;
-    cooldown.current = true;
-    setPhaseIdx(PHASES.indexOf("ipdcp"));
-    window.scrollTo({ top: 0 });
-    setTimeout(() => { cooldown.current = false; }, 1000);
+    window.open(APPLY_URL, "_blank", "noopener");
   }
 
   // ── Nav link handler ──
@@ -80,7 +84,7 @@ export default function App() {
     if (cooldown.current) return;
     cooldown.current = true;
     setPhaseIdx(idx);
-    window.scrollTo({ top: 0 });
+    requestAnimationFrame(() => { window.scrollTo({ top: 0 }); });
     setTimeout(() => { cooldown.current = false; }, 1000);
   }
 
@@ -88,7 +92,9 @@ export default function App() {
     <>
       <style>{`
         *, *::before, *::after { box-sizing: border-box; }
+        html { background: #060810; }
         body { margin: 0; padding: 0; background: #060810; }
+        #root { background: #060810; min-height: 100vh; }
       `}</style>
 
       {/* ── Navbar — always mounted, transparent on hero, glass on scroll ── */}
@@ -99,8 +105,16 @@ export default function App() {
         onApply={handleApply}
       />
 
-      {/* ── Phases ── */}
-      {phase === "hero"  && <CiPDHero onComplete={goNext} />}
+      {/* ── Phases — Hero stays mounted (videos preloaded); others conditional ── */}
+      <div style={{
+        position: phase === "hero" ? "relative" : "fixed",
+        inset: 0,
+        zIndex: phase === "hero" ? 1 : -1,
+        visibility: phase === "hero" ? "visible" : "hidden",
+        pointerEvents: phase === "hero" ? "auto" : "none",
+      }}>
+        <CiPDHero onComplete={goNext} isActive={phase === "hero"} />
+      </div>
       {phase === "story" && <CiPDScrollStory onComplete={goNext} />}
       {phase === "ipdcp" && <IPDCPSection />}
 

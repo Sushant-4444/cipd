@@ -7,20 +7,21 @@ const B = {
   dark:    "#080810",
 };
 
-// ── 7-slide flow ──────────────────────────────────────────────────────────────
-// pct ranges divide 0-100 evenly across 7 slides (~14% each)
+// ── 8-slide flow ──────────────────────────────────────────────────────────────
+// pct ranges divide 0-100 continuously (no gaps between slides)
 const SLIDES = [
-  { pct:[0,14],   id:"01", headline:"iPD-CP:\nTHE ACCELERATOR",   color:B.magenta, type:"identity"     },
-  { pct:[15,28],  id:"02", headline:"BEYOND THE\nSIMULATION",     color:B.teal,    type:"handson"      },
-  { pct:[29,42],  id:"03", headline:"THE MASTERY\nTRACK",         color:"#FFFFFF", type:"modules"      },
-  { pct:[43,57],  id:"04", headline:"ARE YOU THE\nRIGHT FIT?",   color:B.magenta, type:"audience"     },
-  { pct:[58,71],  id:"05", headline:"HEAR FROM\nOUR BUILDERS",   color:B.teal,    type:"testimonials" },
-  { pct:[72,85],  id:"06", headline:"THE FULL\nSTACK SUPPORT",   color:B.gold,    type:"ecosystem"    },
-  { pct:[86,100], id:"07", headline:"RESERVE YOUR\nSEAT",         color:"gold",    type:"cta"          },
+  { pct:[0,12.49],     id:"01", headline:"iPD-CP:\nTHE ACCELERATOR",   color:B.magenta, type:"identity"     },
+  { pct:[12.5,24.99],  id:"02", headline:"BEYOND THE\nSIMULATION",     color:B.teal,    type:"handson"      },
+  { pct:[25,37.49],    id:"03", headline:"THE MASTERY\nTRACK",         color:"#FFFFFF", type:"modules"      },
+  { pct:[37.5,49.99],  id:"04", headline:"ARE YOU THE\nRIGHT FIT?",   color:B.magenta, type:"audience"     },
+  { pct:[50,62.49],    id:"05", headline:"HEAR FROM\nOUR BUILDERS",   color:B.teal,    type:"testimonials" },
+  { pct:[62.5,74.99],  id:"06", headline:"SCHOLARSHIPS\n& FELLOWSHIPS", color:B.teal,    type:"scholarships" },
+  { pct:[75,87.49],    id:"07", headline:"GRANTS &\nINCUBATION",      color:B.gold,    type:"grants"       },
+  { pct:[87.5,100],    id:"08", headline:"RESERVE YOUR\nSEAT",         color:"gold",    type:"cta"          },
 ];
 
 const TOTAL_SLIDES = SLIDES.length;
-const MULTIPLIER   = 7;   // 1 slide per 100vh of scroll
+const MULTIPLIER   = 8;   // 1 slide per 100vh of scroll
 const clamp  = (v,a,b) => Math.max(a, Math.min(b, v));
 const accentOf = s => s.color === "gold" ? B.gold : s.color;
 
@@ -47,19 +48,19 @@ const TESTIMONIALS = [
   {
     src:   "/testimonials/segment_1.mp4",   // ← replace with real path
     name:  "Vivek Dagar",
-    batch: "Cohort 01 · 2024",
+    batch: "Cohort 01 · 2025",
     poster:"/testimonials/segment_1.png", // ← optional thumbnail
   },
   {
     src:   "/testimonials/segment_2.mp4",
     name:  "Yash Agarwal",
-    batch: "Cohort 01 · 2024",
+    batch: "Cohort 01 · 2025",
     poster:"/testimonials/segment_2.png",
   },
   {
     src:   "/testimonials/segment_4.mp4",
     name:  "Theajus Prakash",
-    batch: "Cohort 01 · 2024",
+    batch: "Cohort 01 · 2025",
     poster:"/testimonials/segment_4.png",
   },
 ];
@@ -75,13 +76,24 @@ export default function IPDCPSection() {
   const [modVis,   setModVis]   = useState(-1);
   const [hov,      setHov]      = useState(null);
   const [mounted,  setMounted]  = useState(false);
-  const lastIdxRef = useRef(0);
-  const timerRef   = useRef(null);
+  const lastIdxRef  = useRef(0);
+  const timerRef    = useRef(null);
+  const inTransit   = useRef(false);
+  const queuedIdx   = useRef(null);         // queued target while animating
 
   useEffect(() => { setMounted(true); }, []);
 
   const goTo = useCallback((next) => {
     if (next === lastIdxRef.current) return;
+
+    // If mid-transition, queue the latest target — don't drop it
+    if (inTransit.current) {
+      queuedIdx.current = next;
+      return;
+    }
+
+    inTransit.current = true;
+    queuedIdx.current = null;
     const d = next > lastIdxRef.current ? 1 : -1;
     setDir(d);
     lastIdxRef.current = next;
@@ -90,8 +102,18 @@ export default function IPDCPSection() {
     timerRef.current = setTimeout(() => {
       setSlideIdx(next);
       setPhase("enter");
-      timerRef.current = setTimeout(() => setPhase("idle"), 700);
-    }, 380);
+      timerRef.current = setTimeout(() => {
+        setPhase("idle");
+        inTransit.current = false;
+
+        // If a newer target was queued during this transition, jump to it now
+        if (queuedIdx.current !== null && queuedIdx.current !== lastIdxRef.current) {
+          const queued = queuedIdx.current;
+          queuedIdx.current = null;
+          goTo(queued);
+        }
+      }, 420);
+    }, 250);
   }, []);
 
   useEffect(() => {
@@ -107,12 +129,19 @@ export default function IPDCPSection() {
       setProg(p);
 
       // PCB animation only on slide 02
-      setPcbStep(pct >= 15 && pct <= 28 ? Math.floor(((pct-15)/13)*5) : pct > 28 ? 5 : 0);
+      setPcbStep(pct >= 12.5 && pct <= 25 ? Math.floor(((pct-12.5)/12.5)*5) : pct > 25 ? 5 : 0);
       // Module cards reveal on slide 03
-      setModVis(pct >= 29 && pct <= 42 ? Math.floor(((pct-29)/13)*3) : pct < 29 ? -1 : 2);
+      setModVis(pct >= 25 && pct <= 37.5 ? Math.floor(((pct-25)/12.5)*3) : pct < 25 ? -1 : 2);
 
       const idx = SLIDES.findIndex(s => pct >= s.pct[0] && pct <= s.pct[1]);
-      goTo(idx === -1 ? (pct > 86 ? TOTAL_SLIDES-1 : 0) : idx);
+      // Fallback: nearest slide by midpoint (should rarely trigger with continuous ranges)
+      const safeIdx = idx === -1
+        ? SLIDES.reduce((best, s, i) => {
+            const mid = (s.pct[0] + s.pct[1]) / 2;
+            return Math.abs(pct - mid) < Math.abs(pct - (SLIDES[best].pct[0] + SLIDES[best].pct[1]) / 2) ? i : best;
+          }, 0)
+        : idx;
+      goTo(safeIdx);
     }
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
@@ -168,7 +197,8 @@ export default function IPDCPSection() {
               {slide.type==="modules"      && <SlideModules     accent={accent} visible={modVis}/>}
               {slide.type==="audience"     && <SlideAudience    accent={accent} hov={hov} setHov={setHov}/>}
               {slide.type==="testimonials" && <SlideTestimonials accent={accent}/>}
-              {slide.type==="ecosystem"    && <SlideEcosystem   accent={accent} hov={hov} setHov={setHov}/>}
+              {slide.type==="scholarships" && <SlideScholarships accent={accent} hov={hov} setHov={setHov}/>}
+              {slide.type==="grants"       && <SlideGrants       accent={accent} hov={hov} setHov={setHov}/>}
               {slide.type==="cta"          && <SlideCTA         accent={accent} hov={hov} setHov={setHov}/>}
             </SlideFrame>
           </div>
@@ -194,8 +224,8 @@ function SlideFrame({ slide, phase, dir, total, children }) {
   const yExit   = dir === 1 ? "-6vh" : "6vh";
   const yEnter  = dir === 1 ? "6vh"  : "-6vh";
 
-  // Wide layout for testimonials and ecosystem — they need more horizontal space
-  const isWide = slide.type === "testimonials" || slide.type === "ecosystem";
+  // Wide layout for testimonials, scholarships, grants — they need more horizontal space
+  const isWide = slide.type === "testimonials" || slide.type === "scholarships" || slide.type === "grants";
 
   return (
     <div className={`ip-frame ${isWide ? "ip-frame--wide" : ""}`} style={{
@@ -295,13 +325,13 @@ function PCBBoard({ step, accent, slideIdx }) {
 function SlideIdentity({ accent }) {
   return (
     <div className="ip-content">
-      <p className="ip-body">A <strong>24-week, full-time on-campus intensive</strong> at IIIT Delhi — bridging the gap between academic theory and production-ready innovation.</p>
+      <p className="ip-body">A <strong>certificate programme</strong> at IIIT Delhi — bridging the gap between academic theory and <strong>production-ready hardware innovation</strong>.</p>
       <div className="ip-card" style={{borderLeftColor:accent}}>
         <span className="ip-card-label" style={{color:accent}}>The Goal</span>
         <p className="ip-card-text">Turning India into a Product Nation by upskilling the next generation of hardware innovators.</p>
       </div>
       <div className="ip-stats">
-        {[["24","Weeks Full-Time"],["100%","On Campus"],["1","Production-Ready Product"]].map(([n,l],i) => (
+        {[["24","Weeks"],["IIIT-D","Campus"],["1","Finished Product"]].map(([n,l],i) => (
           <div key={i} className="ip-stat" style={{"--i":i}}>
             <span className="ip-stat-n" style={{color:accent}}>{n}</span>
             <span className="ip-stat-l">{l}</span>
@@ -322,11 +352,6 @@ function SlideHandson({ accent, pcbStep }) {
   return (
     <div className="ip-content">
       <p className="ip-body">Modeled on <strong>industry training for fresh hires</strong> — master the entire <strong>Product Development Life Cycle</strong>.</p>
-      <div className="ip-counter" style={{borderColor:`${accent}44`, background:`${accent}0d`}}>
-        <span style={{color:"rgba(255,255,255,.5)"}}>Stages complete →</span>
-        <span className="ip-counter-n" style={{color:accent}}>{pcbStep + 1}</span>
-        <span style={{color:"rgba(255,255,255,.5)"}}>of 5</span>
-      </div>
       <div className="ip-feats">
         {feats.map((f,i) => (
           <div key={i} className="ip-feat" style={{"--i":i}}>
@@ -342,13 +367,13 @@ function SlideHandson({ accent, pcbStep }) {
 // ── Slide 03 — Modules ────────────────────────────────────────────────────────
 function SlideModules({ accent, visible }) {
   const mods = [
-    { icon:"◐", t:"Design Thinking",      d:"Empathizing with users to build user-centric hardware." },
-    { icon:"◑", t:"UX for Hardware",      d:"Managing the integration of hardware, software, and UI." },
-    { icon:"◒", t:"Production Readiness", d:"BOM finalization, quality assurance, manufacturing plans." },
+    { icon:"◐", t:"Design Thinking",            d:"Surveys, requirement analysis, and building products that solve real user problems." },
+    { icon:"◑", t:"Embedded Hardware",           d:"Circuit design, PCB schematics, fabrication, soldering, and thermal management." },
+    { icon:"◒", t:"Software & Firmware",          d:"Production-grade code on STM32 microcontrollers with seamless hardware integration." },
   ];
   return (
     <div className="ip-content">
-      <p className="ip-body">Three core mastery tracks — from thinking to making to shipping.</p>
+      <p className="ip-body">Three core mastery tracks — from users to hardware to code.</p>
       <div className="ip-mod-grid">
         {mods.map((m,i) => (
           <div key={i} className="ip-mod" style={{
@@ -378,7 +403,7 @@ function SlideAudience({ accent, hov, setHov }) {
   ];
   return (
     <div className="ip-content">
-      <p className="ip-body">Built for builders at every stage — find your cohort below.</p>
+      <p className="ip-body">Built for builders at every stage.</p>
       <div className="ip-aud-grid">
         {cards.map((c,i) => (
           <div key={i} className="ip-aud"
@@ -546,22 +571,16 @@ function VideoCard({ testimonial, accent, index, isActive, onPlay }) {
   );
 }
 
-// ── Slide 06 — Ecosystem (full detail) ───────────────────────────────────────
-//
-// Three tiers, each with its own visual language:
-//   TIER 1 — Direct Scholarships & GPA Discounts   (teal)
-//   TIER 2 — CiPD Product Fellowship (stipend)      (magenta)
-//   TIER 3 — Startup Grants & Incubation            (gold)
-//
-function SlideEcosystem({ accent, hov, setHov }) {
+// ── Slide 06 — Scholarships & Fellowships ────────────────────────────────────
+function SlideScholarships({ accent, hov, setHov }) {
   return (
     <div className="ip-eco-wrap">
 
       <p className="ip-body" style={{marginBottom:0}}>
-        More than a programme — a <strong>launchpad with full-stack financial support</strong> from day one.
+        Financial support to make the programme <strong>accessible from day one</strong>.
       </p>
 
-      {/* ── TIER 1: Direct Scholarships & GPA discounts ── */}
+      {/* ── GPA-based Scholarships ── */}
       <div className="ip-tier">
         <div className="ip-tier-header" style={{borderLeftColor:B.teal}}>
           <span className="ip-tier-num" style={{color:B.teal}}>01</span>
@@ -572,7 +591,6 @@ function SlideEcosystem({ accent, hov, setHov }) {
         </div>
 
         <div className="ip-tier-cards">
-          {/* GPA discount cards */}
           {[
             { gpa:"GPA ≥ 8.0", fee:"₹75,000", label:"+ GST", tag:"Highest Discount",  color:B.teal    },
             { gpa:"GPA ≥ 7.5", fee:"₹85,000", label:"+ GST", tag:"Merit Discount",    color:B.teal    },
@@ -593,25 +611,10 @@ function SlideEcosystem({ accent, hov, setHov }) {
               <span className="ip-gpa-base">Base fee: ₹1,25,000</span>
             </div>
           ))}
-
-          {/* Fellowship card */}
-          <div className="ip-gpa-card ip-gpa-card--fellow"
-            style={{
-              borderColor: hov==="fellow" ? B.gold : `${B.gold}33`,
-              background:  hov==="fellow" ? `${B.gold}12` : `${B.gold}06`,
-              boxShadow:   hov==="fellow" ? `0 0 20px ${B.gold}28` : "none",
-            }}
-            onMouseEnter={()=>setHov("fellow")} onMouseLeave={()=>setHov(null)}
-          >
-            <span className="ip-gpa-tag" style={{color:B.gold, borderColor:`${B.gold}44`}}>Targeted Fellowship</span>
-            <span className="ip-gpa-crit">Toppers · Women · EWS</span>
-            <span className="ip-gpa-fee" style={{color:B.gold}}>₹2 Lakhs</span>
-            <span className="ip-gpa-base">Maximum fellowship value</span>
-          </div>
         </div>
       </div>
 
-      {/* ── TIER 2: Product Fellowship (monthly stipend) ── */}
+      {/* ── CiPD Product Fellowship (stipend) ── */}
       <div className="ip-tier">
         <div className="ip-tier-header" style={{borderLeftColor:B.magenta}}>
           <span className="ip-tier-num" style={{color:B.magenta}}>02</span>
@@ -640,13 +643,25 @@ function SlideEcosystem({ accent, hov, setHov }) {
         </div>
       </div>
 
-      {/* ── TIER 3: Startup Grants & Incubation ── */}
+    </div>
+  );
+}
+
+// ── Slide 07 — Grants & Incubation ───────────────────────────────────────────
+function SlideGrants({ accent, hov, setHov }) {
+  return (
+    <div className="ip-eco-wrap">
+
+      <p className="ip-body" style={{marginBottom:0}}>
+        For participants turning their product into a <strong>startup</strong>.
+      </p>
+
       <div className="ip-tier">
         <div className="ip-tier-header" style={{borderLeftColor:B.gold}}>
-          <span className="ip-tier-num" style={{color:B.gold}}>03</span>
+          <span className="ip-tier-num" style={{color:B.gold}}>01</span>
           <div>
             <span className="ip-tier-title" style={{color:B.gold}}>Startup Grants & Incubation</span>
-            <span className="ip-tier-sub">For participants building a startup from their product</span>
+            <span className="ip-tier-sub">Funding and incubation support for cohort startups</span>
           </div>
         </div>
 
@@ -698,16 +713,11 @@ function SlideEcosystem({ accent, hov, setHov }) {
   );
 }
 
-// ── Slide 07 — CTA ────────────────────────────────────────────────────────────
+// ── Slide 08 — CTA ────────────────────────────────────────────────────────────
 function SlideCTA({ accent, hov, setHov }) {
   return (
     <div className="ip-content">
       <div className="ip-invest">
-        {/* Fee — update when confirmed */}
-        <div>
-          <div className="ip-inv-lbl">Programme Fee</div>
-          <div className="ip-inv-amt">₹1,25,000 <sup>+GST</sup></div>
-        </div>
         {/* Cohort date — update when confirmed */}
         <div>
           <div className="ip-inv-lbl">Next Cohort</div>
@@ -724,7 +734,7 @@ function SlideCTA({ accent, hov, setHov }) {
         <button
           className="ip-btn-p"
           style={{"--a":B.teal,"--b":B.gold}}
-          onClick={() => window.open("#apply","_blank","noopener")}
+          onClick={() => window.open("https://docs.google.com/forms/d/e/1FAIpQLScnTQdnzGalnaqckHoUXKlMnYAXiHdn2qpATLaJCVtRCjMCOQ/viewform","_blank","noopener")}
         >
           Apply Now
         </button>
@@ -759,7 +769,7 @@ function CSS(B){ return `
   *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 
   /* ══ Shell ══ */
-  .ip-outer  { position:relative; width:100%; }
+  .ip-outer  { position:relative; width:100%; background:${B.dark}; }
   .ip-sticky { position:sticky; top:0; height:100vh; width:100%; overflow:hidden; background:${B.dark}; }
 
   .ip-pcb-wrap { position:absolute; inset:0; display:flex; align-items:stretch; justify-content:flex-end; pointer-events:none; z-index:1; animation:ipPcbPulse 6s ease-in-out infinite; }
@@ -829,18 +839,18 @@ function CSS(B){ return `
 
   /* ══ Shared content primitives ══ */
   .ip-content { display:flex; flex-direction:column; gap:clamp(8px,1.5vh,16px); }
-  .ip-body    { font-size:clamp(12px,1.1vw,15px); font-weight:300; color:rgba(255,255,255,.65); line-height:1.75; }
+  .ip-body    { font-size:clamp(13px,1.25vw,18px); font-weight:300; color:rgba(255,255,255,.72); line-height:1.78; }
   .ip-body strong { color:#fff; font-weight:600; }
 
-  .ip-card       { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07); border-left-width:3px; padding:10px 14px; border-radius:3px; }
-  .ip-card-label { display:block; font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:.35em; text-transform:uppercase; margin-bottom:4px; }
-  .ip-card-text  { font-size:11px; font-weight:300; color:rgba(255,255,255,.6); line-height:1.65; }
+  .ip-card       { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07); border-left-width:3px; padding:12px 16px; border-radius:3px; }
+  .ip-card-label { display:block; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.35em; text-transform:uppercase; margin-bottom:5px; font-weight:700; }
+  .ip-card-text  { font-size:clamp(13px,1.1vw,16px); font-weight:400; color:rgba(255,255,255,.78); line-height:1.75; }
 
   /* ══ Slide 01 — Identity ══ */
   .ip-stats  { display:flex; gap:clamp(12px,2.5vw,32px); flex-wrap:wrap; }
   .ip-stat   { display:flex; flex-direction:column; gap:3px; animation:ipFadeUp .5s ease calc(var(--i)*.1s + .4s) both; }
   .ip-stat-n { font-family:'Montserrat','Arial Black',sans-serif; font-size:clamp(22px,3.2vw,44px); font-weight:900; line-height:1; }
-  .ip-stat-l { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:.22em; text-transform:uppercase; color:rgba(255,255,255,.3); }
+  .ip-stat-l { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.22em; text-transform:uppercase; color:rgba(255,255,255,.6); }
 
   /* ══ Slide 02 — Handson ══ */
   .ip-counter   { display:flex; align-items:center; gap:10px; padding:9px 13px; border-radius:3px; border:1px solid; font-family:'JetBrains Mono',monospace; font-size:11px; flex-wrap:wrap; }
@@ -848,16 +858,16 @@ function CSS(B){ return `
   .ip-feats     { display:flex; flex-direction:column; gap:7px; }
   .ip-feat      { display:flex; align-items:flex-start; gap:11px; padding:9px 13px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); border-radius:3px; transition:border-color .3s; animation:ipFadeUp .5s ease calc(var(--i)*.1s + .35s) both; }
   .ip-feat:hover { border-color:rgba(0,191,165,.3); }
-  .ip-feat-icon { font-size:16px; flex-shrink:0; margin-top:1px; }
-  .ip-feat-t    { font-size:12px; font-weight:600; color:#fff; margin-bottom:2px; }
-  .ip-feat-d    { font-size:10px; color:rgba(255,255,255,.45); line-height:1.6; }
+  .ip-feat-icon { font-size:18px; flex-shrink:0; margin-top:1px; }
+  .ip-feat-t    { font-size:clamp(12px,1vw,15px); font-weight:600; color:#fff; margin-bottom:3px; }
+  .ip-feat-d    { font-size:clamp(11px,0.9vw,13px); color:rgba(255,255,255,.55); line-height:1.7; }
 
   /* ══ Slide 03 — Modules ══ */
   .ip-mod-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
   .ip-mod      { position:relative; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-top-width:2px; padding:14px 12px 22px; border-radius:3px; overflow:hidden; }
   .ip-mod-icon { font-size:18px; margin-bottom:7px; display:block; }
-  .ip-mod-t    { font-family:'Montserrat',sans-serif; font-weight:800; font-size:12px; color:#fff; margin-bottom:4px; }
-  .ip-mod-d    { font-size:10px; color:rgba(255,255,255,.45); line-height:1.6; }
+  .ip-mod-t    { font-family:'Montserrat',sans-serif; font-weight:800; font-size:clamp(12px,1vw,15px); color:#fff; margin-bottom:4px; }
+  .ip-mod-d    { font-size:clamp(11px,0.9vw,13px); color:rgba(255,255,255,.55); line-height:1.7; }
   .ip-mod-n    { position:absolute; bottom:5px; right:8px; font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:700; color:rgba(255,255,255,.05); }
   @media(max-width:767px) { .ip-mod-grid { grid-template-columns:1fr; gap:8px; } }
 
@@ -865,8 +875,8 @@ function CSS(B){ return `
   .ip-aud-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:9px; }
   .ip-aud      { padding:12px 14px; border:1px solid; border-radius:4px; transition:all .35s ease; cursor:default; animation:ipFadeUp .5s ease calc(var(--i)*.08s + .3s) both; }
   .ip-aud-icon { font-size:18px; display:block; margin-bottom:5px; }
-  .ip-aud-t    { font-size:12px; font-weight:600; color:#fff; margin-bottom:3px; }
-  .ip-aud-d    { font-size:10px; color:rgba(255,255,255,.45); line-height:1.6; }
+  .ip-aud-t    { font-size:clamp(12px,1vw,15px); font-weight:600; color:#fff; margin-bottom:3px; }
+  .ip-aud-d    { font-size:clamp(11px,0.9vw,13px); color:rgba(255,255,255,.55); line-height:1.7; }
   @media(max-width:479px) { .ip-aud-grid { grid-template-columns:1fr; } }
 
   /* ══ Slide 05 — Testimonials ══ */
@@ -976,17 +986,17 @@ function CSS(B){ return `
 
   .ip-tier        { display:flex; flex-direction:column; gap:7px; }
   .ip-tier-header { display:flex; align-items:flex-start; gap:10px; border-left:3px solid; padding-left:10px; }
-  .ip-tier-num    { font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; letter-spacing:.3em; margin-top:2px; flex-shrink:0; }
-  .ip-tier-title  { display:block; font-family:'Montserrat',sans-serif; font-size:clamp(11px,1vw,13px); font-weight:800; margin-bottom:2px; }
-  .ip-tier-sub    { display:block; font-family:'JetBrains Mono',monospace; font-size:8.5px; font-weight:300; color:rgba(255,255,255,.38); letter-spacing:.04em; }
+  .ip-tier-num    { font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; letter-spacing:.3em; margin-top:2px; flex-shrink:0; }
+  .ip-tier-title  { display:block; font-family:'Montserrat',sans-serif; font-size:clamp(13px,1.2vw,16px); font-weight:800; margin-bottom:2px; }
+  .ip-tier-sub    { display:block; font-family:'JetBrains Mono',monospace; font-size:clamp(10px,0.85vw,12px); font-weight:300; color:rgba(255,255,255,.6); letter-spacing:.04em; }
 
   /* Tier 1 — GPA cards */
   .ip-tier-cards  { display:grid; grid-template-columns:repeat(4,1fr); gap:7px; }
   .ip-gpa-card    { border:1px solid; border-radius:6px; padding:9px 10px; display:flex; flex-direction:column; gap:3px; cursor:default; transition:all .3s ease; animation:ipEcoIn .45s ease calc(var(--i)*.08s + .2s) both; }
-  .ip-gpa-tag     { font-family:'JetBrains Mono',monospace; font-size:7px; font-weight:700; letter-spacing:.22em; text-transform:uppercase; border:1px solid; border-radius:2px; padding:1px 5px; width:fit-content; margin-bottom:2px; }
-  .ip-gpa-crit    { font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:600; color:rgba(255,255,255,.7); }
-  .ip-gpa-fee     { font-family:'Montserrat',sans-serif; font-size:clamp(14px,1.5vw,19px); font-weight:900; line-height:1.1; }
-  .ip-gpa-base    { font-family:'JetBrains Mono',monospace; font-size:7.5px; color:rgba(255,255,255,.25); }
+  .ip-gpa-tag     { font-family:'JetBrains Mono',monospace; font-size:8px; font-weight:700; letter-spacing:.22em; text-transform:uppercase; border:1px solid; border-radius:2px; padding:2px 6px; width:fit-content; margin-bottom:2px; }
+  .ip-gpa-crit    { font-family:'JetBrains Mono',monospace; font-size:clamp(11px,0.95vw,13px); font-weight:600; color:rgba(255,255,255,.82); }
+  .ip-gpa-fee     { font-family:'Montserrat',sans-serif; font-size:clamp(16px,1.6vw,22px); font-weight:900; line-height:1.1; }
+  .ip-gpa-base    { font-family:'JetBrains Mono',monospace; font-size:clamp(9px,0.7vw,11px); color:rgba(255,255,255,.45); }
 
   @media(max-width:1023px) { .ip-tier-cards { grid-template-columns:repeat(2,1fr); } }
   @media(max-width:767px)  { .ip-tier-cards { grid-template-columns:repeat(2,1fr); gap:6px; } }
@@ -995,10 +1005,10 @@ function CSS(B){ return `
   /* Tier 2 — Stipend */
   .ip-stipend-row       { display:grid; grid-template-columns:repeat(3,1fr) 1.4fr; gap:7px; align-items:stretch; }
   .ip-stipend-stat      { display:flex; flex-direction:column; gap:3px; background:rgba(233,30,140,.06); border:1px solid rgba(233,30,140,.2); border-radius:6px; padding:9px 11px; animation:ipEcoIn .45s ease calc(var(--i)*.08s + .2s) both; }
-  .ip-stipend-val       { font-family:'Montserrat',sans-serif; font-size:clamp(14px,1.6vw,21px); font-weight:900; line-height:1; }
-  .ip-stipend-label     { font-family:'Montserrat',sans-serif; font-size:10px; font-weight:700; color:#fff; margin-top:2px; }
-  .ip-stipend-note      { font-family:'JetBrains Mono',monospace; font-size:7.5px; color:rgba(255,255,255,.3); }
-  .ip-stipend-note-card { border:1px solid; border-radius:6px; padding:9px 11px; font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:300; color:rgba(255,255,255,.5); line-height:1.65; }
+  .ip-stipend-val       { font-family:'Montserrat',sans-serif; font-size:clamp(16px,1.8vw,24px); font-weight:900; line-height:1; }
+  .ip-stipend-label     { font-family:'Montserrat',sans-serif; font-size:clamp(11px,0.9vw,13px); font-weight:700; color:#fff; margin-top:2px; }
+  .ip-stipend-note      { font-family:'JetBrains Mono',monospace; font-size:clamp(8px,0.7vw,10px); color:rgba(255,255,255,.45); }
+  .ip-stipend-note-card { border:1px solid; border-radius:6px; padding:10px 12px; font-family:'JetBrains Mono',monospace; font-size:clamp(10px,0.85vw,12px); font-weight:300; color:rgba(255,255,255,.65); line-height:1.7; }
 
   @media(max-width:1023px) { .ip-stipend-row { grid-template-columns:repeat(3,1fr); } .ip-stipend-note-card { display:none; } }
   @media(max-width:767px)  { .ip-stipend-row { grid-template-columns:repeat(3,1fr); gap:6px; } }
@@ -1007,9 +1017,9 @@ function CSS(B){ return `
   /* Tier 3 — Grants */
   .ip-grant-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:7px; }
   .ip-grant-card { border:1px solid; border-radius:6px; padding:10px 11px; display:flex; flex-direction:column; gap:4px; cursor:default; transition:all .3s ease; animation:ipEcoIn .45s ease calc(var(--i)*.09s + .25s) both; }
-  .ip-grant-amt  { font-family:'Montserrat',sans-serif; font-size:clamp(13px,1.4vw,17px); font-weight:900; line-height:1; }
-  .ip-grant-name { font-family:'Montserrat',sans-serif; font-size:10.5px; font-weight:800; color:#fff; line-height:1.3; }
-  .ip-grant-desc { font-family:'JetBrains Mono',monospace; font-size:8.5px; font-weight:300; color:rgba(255,255,255,.4); line-height:1.6; margin-top:1px; }
+  .ip-grant-amt  { font-family:'Montserrat',sans-serif; font-size:clamp(15px,1.5vw,20px); font-weight:900; line-height:1; }
+  .ip-grant-name { font-family:'Montserrat',sans-serif; font-size:clamp(12px,1vw,14px); font-weight:800; color:#fff; line-height:1.3; }
+  .ip-grant-desc { font-family:'JetBrains Mono',monospace; font-size:clamp(10px,0.85vw,12px); font-weight:300; color:rgba(255,255,255,.6); line-height:1.7; margin-top:1px; }
 
   @media(max-width:1023px) { .ip-grant-grid { grid-template-columns:repeat(2,1fr); } }
   @media(max-width:767px)  { .ip-grant-grid { grid-template-columns:repeat(2,1fr); gap:6px; } }
@@ -1017,7 +1027,7 @@ function CSS(B){ return `
 
   /* ══ Slide 07 — CTA ══ */
   .ip-invest   { display:flex; gap:clamp(16px,4vw,48px); flex-wrap:wrap; }
-  .ip-inv-lbl  { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.35em; text-transform:uppercase; color:rgba(255,255,255,.3); margin-bottom:4px; }
+  .ip-inv-lbl  { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.35em; text-transform:uppercase; color:rgba(255,255,255,.65); margin-bottom:4px; }
   .ip-inv-amt  { font-family:'Montserrat','Arial Black',sans-serif; font-weight:900; font-size:clamp(20px,3vw,38px); color:#fff; }
   .ip-inv-amt sup { font-size:.45em; color:rgba(255,255,255,.35); }
   .ip-inv-date { font-family:'Montserrat',sans-serif; font-weight:700; font-size:clamp(16px,2.2vw,28px); }

@@ -38,7 +38,7 @@ const BLOBS = [
 
 function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 
-export default function CiPDHero({ onComplete }) {
+export default function CiPDHero({ onComplete, isActive = true }) {
   const vRefs     = useRef([]);
   const lastIdx   = useRef(0);
   const inTransit = useRef(false);
@@ -71,12 +71,23 @@ export default function CiPDHero({ onComplete }) {
     document.head.appendChild(l);
   }, []);
 
-  // Play video + auto-advance
+  // Reset to section 0 whenever hero becomes active again (e.g. scroll-back)
+  useEffect(() => {
+    if (isActive) {
+      lastIdx.current = 0;
+      inTransit.current = false;
+      accDelta.current = 0;
+      setActive(0);
+      setTextIn(true);
+    }
+  }, [isActive]);
+
+  // Play video + auto-advance — only when active
   useEffect(() => {
     vRefs.current.forEach((v, i) => {
       if (!v) return;
       v.onended = null;
-      if (i === active) {
+      if (isActive && i === active) {
         v.loop = false;
         v.currentTime = 0;
         v.play().catch(() => {});
@@ -85,20 +96,55 @@ export default function CiPDHero({ onComplete }) {
         v.pause();
       }
     });
-  }, [active, goTo]);
+  }, [active, goTo, isActive]);
 
-  // Scroll / touch / keyboard
+  // Scroll / touch / keyboard — only when active
   useEffect(() => {
+    if (!isActive) return;
+
+    let lastDir = 0;
+    let idleTimer = null;
+    const WHEEL_THRESHOLD = 120;
+
+    // Normalize deltaY: line-mode ×40, page-mode ×800, cap pixel at ±120
+    function normDelta(e) {
+      let d = e.deltaY;
+      if (e.deltaMode === 1) d *= 40;
+      else if (e.deltaMode === 2) d *= 800;
+      return Math.max(-120, Math.min(120, d));
+    }
+
     const onW = e => {
       e.preventDefault();
       if (inTransit.current) return;
-      accDelta.current += e.deltaY;
-      if (accDelta.current > 110)  { accDelta.current = 0; goTo(lastIdx.current + 1); }
-      if (accDelta.current < -110) { accDelta.current = 0; goTo(clamp(lastIdx.current - 1, 0, SECTIONS.length - 1)); }
+
+      const d = normDelta(e);
+      const dir = d > 0 ? 1 : -1;
+
+      // Reset accumulator on direction change
+      if (dir !== lastDir) { accDelta.current = 0; lastDir = dir; }
+
+      // Reset accumulator after 200ms idle
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => { accDelta.current = 0; }, 200);
+
+      accDelta.current += d;
+      if (accDelta.current > WHEEL_THRESHOLD)  { accDelta.current = 0; goTo(lastIdx.current + 1); }
+      if (accDelta.current < -WHEEL_THRESHOLD) { accDelta.current = 0; goTo(clamp(lastIdx.current - 1, 0, SECTIONS.length - 1)); }
     };
+
     let ty = 0;
-    const onTS = e => { ty = e.touches[0].clientY; };
-    const onTE = e => { const d = ty - e.changedTouches[0].clientY; if (Math.abs(d) > 40) goTo(lastIdx.current + (d > 0 ? 1 : -1)); };
+    let tTime = 0;
+    const onTS = e => { ty = e.touches[0].clientY; tTime = Date.now(); };
+    const onTE = e => {
+      if (inTransit.current) return;
+      const d = ty - e.changedTouches[0].clientY;
+      const elapsed = Date.now() - tTime;
+      const velocity = Math.abs(d) / Math.max(elapsed, 1) * 1000; // px/sec
+      // Require 50px swipe AND reasonable velocity (>200 px/s)
+      if (Math.abs(d) > 50 && velocity > 200) goTo(lastIdx.current + (d > 0 ? 1 : -1));
+    };
+
     const onK  = e => {
       if (e.key === "ArrowDown" || e.key === "ArrowRight") goTo(lastIdx.current + 1);
       if (e.key === "ArrowUp"   || e.key === "ArrowLeft")  goTo(clamp(lastIdx.current - 1, 0, SECTIONS.length - 1));
@@ -108,12 +154,13 @@ export default function CiPDHero({ onComplete }) {
     window.addEventListener("touchend",   onTE, { passive: true });
     window.addEventListener("keydown",    onK);
     return () => {
+      clearTimeout(idleTimer);
       window.removeEventListener("wheel", onW);
       window.removeEventListener("touchstart", onTS);
       window.removeEventListener("touchend",   onTE);
       window.removeEventListener("keydown",    onK);
     };
-  }, [goTo]);
+  }, [goTo, isActive]);
 
   const sec    = SECTIONS[active];
   const bl     = BLOBS[active];
