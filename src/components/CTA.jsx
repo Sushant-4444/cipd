@@ -155,28 +155,12 @@ export default function FloatingCTA({
 
           {/* ── SECTION 2: Deadline ── */}
           <div className="fcta-deadline">
-            <span className="fcta-dl-eyebrow">Application Deadline</span>
+            <span className="fcta-dl-eyebrow" style={{ color: '#FFB300' }}>Early Application Round Deadline</span>
 
-            {countdown ? (
-              <div className="fcta-countdown">
-                {[["D", countdown.days], ["H", countdown.hours], ["M", countdown.mins], ["S", countdown.secs]].map(([u, v], i) => (
-                  <div key={u} className="fcta-unit-group">
-                    <div className="fcta-unit-pill">
-                      <span className="fcta-unit-n" key={`${u}-${v}`}>{pad(v)}</span>
-                    </div>
-                    <span className="fcta-unit-label">{u}</span>
-                    {i < 3 && <span className="fcta-sep">:</span>}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="fcta-tba-wrap">
-                <span className="fcta-tba-dot"/>
-                <span className="fcta-tba">
-                  {applicationDeadline === "TBA" ? "To Be Announced" : applicationDeadline}
-                </span>
-              </div>
-            )}
+            <div className="fcta-tba-wrap">
+              <span className="fcta-tba-dot"/>
+              <span className="fcta-tba">31 March 2026</span>
+            </div>
           </div>
 
           {/* Divider */}

@@ -121,7 +121,7 @@ export default function App() {
 
       {/* ── Floating CTA — always visible ── */}
       <FloatingCTA
-        applicationDeadline="TBA"    /* ← swap e.g. "2026-06-01" once confirmed */
+        applicationDeadline="2026-03-31" // Early round applications open, apply by 31 March 2026
         onApply={handleApply}
       />
     </>
