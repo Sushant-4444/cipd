@@ -66,7 +66,7 @@ export default function App() {
   // ── Body scroll lock ──
   useEffect(() => {
     document.body.style.overflow = isHero ? "hidden" : "auto";
-    if (!isHero) window.scrollTo({ top: 0 });
+    window.scrollTo({ top: 0 });
   }, [isHero]);
 
   // ── Shared "Apply Now" handler ──
@@ -107,11 +107,12 @@ export default function App() {
 
       {/* ── Phases — Hero stays mounted (videos preloaded); others conditional ── */}
       <div style={{
-        position: phase === "hero" ? "relative" : "fixed",
+        position: "fixed",
         inset: 0,
-        zIndex: phase === "hero" ? 1 : -1,
-        visibility: phase === "hero" ? "visible" : "hidden",
+        zIndex: phase === "hero" ? 5 : 0,
+        opacity: phase === "hero" ? 1 : 0,
         pointerEvents: phase === "hero" ? "auto" : "none",
+        transition: "opacity 180ms linear",
       }}>
         <CiPDHero onComplete={goNext} isActive={phase === "hero"} />
       </div>

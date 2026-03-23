@@ -49,12 +49,13 @@ export default function CiPDHero({ onComplete, isActive = true }) {
   // goTo — defined first so useEffects below can reference it
   const goTo = useCallback((next) => {
     if (next > SECTIONS.length - 1) { if (onComplete) onComplete(); return; }
-    if (inTransit.current || next === lastIdx.current) return;
+    const target = clamp(next, 0, SECTIONS.length - 1);
+    if (inTransit.current || target === lastIdx.current) return;
     inTransit.current = true;
     setTextIn(false);
     setTimeout(() => {
-      lastIdx.current = next;
-      setActive(next);
+      lastIdx.current = target;
+      setActive(target);
       setTextIn(true);
       accDelta.current = 0;
       setTimeout(() => { inTransit.current = false; }, 200);
