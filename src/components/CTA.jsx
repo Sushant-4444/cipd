@@ -155,11 +155,11 @@ export default function FloatingCTA({
 
           {/* ── SECTION 2: Deadline ── */}
           <div className="fcta-deadline">
-            <span className="fcta-dl-eyebrow" style={{ color: '#FFB300' }}>Early Application Round Deadline</span>
+            <span className="fcta-dl-eyebrow" style={{ color: '#FFB300' }}>Regular Application Open Till</span>
 
             <div className="fcta-tba-wrap">
               <span className="fcta-tba-dot"/>
-              <span className="fcta-tba">31 March 2026</span>
+              <span className="fcta-tba">27 April 2026</span>
             </div>
           </div>
 

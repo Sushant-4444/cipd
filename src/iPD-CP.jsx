@@ -727,7 +727,7 @@ function SlideCTA({ accent, hov, setHov }) {
 
       <div className="ip-cta-note" style={{borderLeftColor:accent}}>
         <span className="ip-cta-note-label" style={{color:accent}}>Limited Seats</span>
-        <p className="ip-card-text">Each cohort is capped to ensure hands-on mentorship. <b>Early round applications open — apply by 31 March 2026.</b></p>
+        <p className="ip-card-text">Each cohort is capped to ensure hands-on mentorship. <b>Regular application open till 27th April 2026.</b></p>
       </div>
 
       <div className="ip-btns">
