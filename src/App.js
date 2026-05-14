@@ -2,10 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import CiPDHero        from "./HeroPage";
 import CiPDScrollStory from "./CiPDScrollAnimationMilestones";
 import IPDCPSection    from "./iPD-CP";
+import EventsPage      from "./EventsPage";
 import Navbar          from "./components/Navbar";          // ← NEW
 import FloatingCTA     from  "./components/CTA"; // ← NEW
 
-const PHASES = ["hero", "story", "ipdcp"];
+const PHASES = ["hero", "story", "ipdcp", "events"];
 
 export default function App() {
   const [phaseIdx, setPhaseIdx] = useState(0);
@@ -13,6 +14,15 @@ export default function App() {
 
   const phase  = PHASES[phaseIdx];
   const isHero = phase === "hero";
+
+  function goToEvents() {
+    if (phase === "events") return;
+    if (cooldown.current) return;
+    cooldown.current = true;
+    setPhaseIdx(PHASES.indexOf("events"));
+    requestAnimationFrame(() => { window.scrollTo({ top: 0 }); });
+    setTimeout(() => { cooldown.current = false; }, 1000);
+  }
 
   function goNext() {
     if (cooldown.current) return;
@@ -117,11 +127,12 @@ export default function App() {
         <CiPDHero onComplete={goNext} isActive={phase === "hero"} />
       </div>
       {phase === "story" && <CiPDScrollStory onComplete={goNext} />}
-      {phase === "ipdcp" && <IPDCPSection />}
+      {phase === "ipdcp" && <IPDCPSection onEvents={goToEvents} />}
+      {phase === "events" && <EventsPage />}
 
       {/* ── Floating CTA — always visible ── */}
       <FloatingCTA
-        applicationDeadline="2026-03-31" // Early round applications open, apply by 31 March 2026
+        applicationDeadline="2026-05-27" // Final Application Submission Deadline: 27 May 2026
         onApply={handleApply}
       />
     </>

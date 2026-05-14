@@ -66,7 +66,10 @@ const TESTIMONIALS = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-export default function IPDCPSection() {
+// ── CMS API base URL ────────────────────────────────────────────────────
+const CMS_API = process.env.REACT_APP_CMS_URL || "http://localhost:3001";
+
+export default function IPDCPSection({ onEvents }) {
   const containerRef = useRef(null);
   const [prog,     setProg]     = useState(0);
   const [slideIdx, setSlideIdx] = useState(0);
@@ -80,6 +83,25 @@ export default function IPDCPSection() {
   const timerRef    = useRef(null);
   const inTransit   = useRef(false);
   const queuedIdx   = useRef(null);         // queued target while animating
+
+  // ── CMS content for the 8 slides + global settings ──
+  // Fetched once on mount. While loading, each Slide* component falls back to
+  // sensible defaults, so the page is never blank.
+  const [cms, setCms] = useState(null);
+  const [settings, setSettings] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${CMS_API}/api/globals/ipdcp-page?depth=2`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (!cancelled && data) setCms(data); })
+      .catch(() => {});
+    fetch(`${CMS_API}/api/globals/settings?depth=0`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (!cancelled && data) setSettings(data); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -192,14 +214,14 @@ export default function IPDCPSection() {
           {/* Slide content */}
           <div className="ip-stage">
             <SlideFrame key={slideIdx} slide={slide} phase={phase} dir={dir} total={TOTAL_SLIDES}>
-              {slide.type==="identity"     && <SlideIdentity    accent={accent}/>}
-              {slide.type==="handson"      && <SlideHandson     accent={accent} pcbStep={pcbStep}/>}
-              {slide.type==="modules"      && <SlideModules     accent={accent} visible={modVis}/>}
-              {slide.type==="audience"     && <SlideAudience    accent={accent} hov={hov} setHov={setHov}/>}
-              {slide.type==="testimonials" && <SlideTestimonials accent={accent}/>}
-              {slide.type==="scholarships" && <SlideScholarships accent={accent} hov={hov} setHov={setHov}/>}
-              {slide.type==="grants"       && <SlideGrants       accent={accent} hov={hov} setHov={setHov}/>}
-              {slide.type==="cta"          && <SlideCTA         accent={accent} hov={hov} setHov={setHov}/>}
+              {slide.type==="identity"     && <SlideIdentity    accent={accent} cms={cms?.slide01}/>}
+              {slide.type==="handson"      && <SlideHandson     accent={accent} pcbStep={pcbStep} cms={cms?.slide02}/>}
+              {slide.type==="modules"      && <SlideModules     accent={accent} visible={modVis} cms={cms?.slide03}/>}
+              {slide.type==="audience"     && <SlideAudience    accent={accent} hov={hov} setHov={setHov} cms={cms?.slide04}/>}
+              {slide.type==="testimonials" && <SlideTestimonials accent={accent} cms={cms?.slide05}/>}
+              {slide.type==="scholarships" && <SlideScholarships accent={accent} hov={hov} setHov={setHov} cms={cms?.slide06}/>}
+              {slide.type==="grants"       && <SlideGrants       accent={accent} hov={hov} setHov={setHov} cms={cms?.slide07}/>}
+              {slide.type==="cta"          && <SlideCTA         accent={accent} hov={hov} setHov={setHov} onEvents={onEvents} cms={cms?.slide08} settings={settings}/>}
             </SlideFrame>
           </div>
 
@@ -322,19 +344,26 @@ function PCBBoard({ step, accent, slideIdx }) {
 }
 
 // ── Slide 01 — Identity ───────────────────────────────────────────────────────
-function SlideIdentity({ accent }) {
+function SlideIdentity({ accent, cms }) {
+  const body      = cms?.body      || "A certificate program at IIIT Delhi — bridging the gap between academic theory and production-ready hardware innovation.";
+  const goalLabel = cms?.goalLabel || "The Goal";
+  const goalText  = cms?.goalText  || "Turning India into a Product Nation by upskilling the next generation of hardware innovators.";
+  const stats     = (cms?.stats && cms.stats.length > 0)
+    ? cms.stats
+    : [{ number: "24", label: "Weeks" }, { number: "IIIT-D", label: "Campus" }, { number: "1", label: "Finished Product" }];
+
   return (
     <div className="ip-content">
-      <p className="ip-body">A <strong>certificate programme</strong> at IIIT Delhi — bridging the gap between academic theory and <strong>production-ready hardware innovation</strong>.</p>
+      <p className="ip-body">{body}</p>
       <div className="ip-card" style={{borderLeftColor:accent}}>
-        <span className="ip-card-label" style={{color:accent}}>The Goal</span>
-        <p className="ip-card-text">Turning India into a Product Nation by upskilling the next generation of hardware innovators.</p>
+        <span className="ip-card-label" style={{color:accent}}>{goalLabel}</span>
+        <p className="ip-card-text">{goalText}</p>
       </div>
       <div className="ip-stats">
-        {[["24","Weeks"],["IIIT-D","Campus"],["1","Finished Product"]].map(([n,l],i) => (
+        {stats.map((s, i) => (
           <div key={i} className="ip-stat" style={{"--i":i}}>
-            <span className="ip-stat-n" style={{color:accent}}>{n}</span>
-            <span className="ip-stat-l">{l}</span>
+            <span className="ip-stat-n" style={{color:accent}}>{s.number}</span>
+            <span className="ip-stat-l">{s.label}</span>
           </div>
         ))}
       </div>
@@ -343,15 +372,18 @@ function SlideIdentity({ accent }) {
 }
 
 // ── Slide 02 — Hands-on ───────────────────────────────────────────────────────
-function SlideHandson({ accent, pcbStep }) {
-  const feats = [
-    { icon:"◈", t:"Concept to Reality",  d:"From initial ideation to a production-ready prototype." },
-    { icon:"⬡", t:"The Technical Stack", d:"Embedded Systems, IoT, PCB Design, and Enclosure Design." },
-    { icon:"◎", t:"Industry Validation", d:"Comprehensive testing, validation, and production readiness." },
-  ];
+function SlideHandson({ accent, pcbStep, cms }) {
+  const body = cms?.body || "Modeled on industry training for fresh hires — master the entire Product Development Life Cycle.";
+  const feats = (cms?.features && cms.features.length > 0)
+    ? cms.features.map((f) => ({ icon: f.icon, t: f.title, d: f.description }))
+    : [
+        { icon:"◈", t:"Concept to Reality",  d:"From initial ideation to a production-ready prototype." },
+        { icon:"⬡", t:"The Technical Stack", d:"Embedded Systems, IoT, PCB Design, and Enclosure Design." },
+        { icon:"◎", t:"Industry Validation", d:"Comprehensive testing, validation, and production readiness." },
+      ];
   return (
     <div className="ip-content">
-      <p className="ip-body">Modeled on <strong>industry training for fresh hires</strong> — master the entire <strong>Product Development Life Cycle</strong>.</p>
+      <p className="ip-body">{body}</p>
       <div className="ip-feats">
         {feats.map((f,i) => (
           <div key={i} className="ip-feat" style={{"--i":i}}>
@@ -365,15 +397,18 @@ function SlideHandson({ accent, pcbStep }) {
 }
 
 // ── Slide 03 — Modules ────────────────────────────────────────────────────────
-function SlideModules({ accent, visible }) {
-  const mods = [
-    { icon:"◐", t:"Design Thinking",            d:"Surveys, requirement analysis, and building products that solve real user problems." },
-    { icon:"◑", t:"Embedded Hardware",           d:"Circuit design, PCB schematics, fabrication, soldering, and thermal management." },
-    { icon:"◒", t:"Software & Firmware",          d:"Production-grade code on STM32 microcontrollers with seamless hardware integration." },
-  ];
+function SlideModules({ accent, visible, cms }) {
+  const body = cms?.body || "Three core mastery tracks — from users to hardware to code.";
+  const mods = (cms?.modules && cms.modules.length > 0)
+    ? cms.modules.map((m) => ({ icon: m.icon, t: m.title, d: m.description }))
+    : [
+        { icon:"◐", t:"Design Thinking",      d:"Surveys, requirement analysis, and building products that solve real user problems." },
+        { icon:"◑", t:"Embedded Hardware",     d:"Circuit design, PCB schematics, fabrication, soldering, and thermal management." },
+        { icon:"◒", t:"Software & Firmware",   d:"Production-grade code on STM32 microcontrollers with seamless hardware integration." },
+      ];
   return (
     <div className="ip-content">
-      <p className="ip-body">Three core mastery tracks — from users to hardware to code.</p>
+      <p className="ip-body">{body}</p>
       <div className="ip-mod-grid">
         {mods.map((m,i) => (
           <div key={i} className="ip-mod" style={{
@@ -394,16 +429,19 @@ function SlideModules({ accent, visible }) {
 }
 
 // ── Slide 04 — Audience ───────────────────────────────────────────────────────
-function SlideAudience({ accent, hov, setHov }) {
-  const cards = [
-    { icon:"🎓", t:"Final-Year Students",      d:"Keen on building world-class hardware products." },
-    { icon:"⚡", t:"Recent Graduates",          d:"Looking to boost employability through specialised upskilling." },
-    { icon:"🚀", t:"Startups & Entrepreneurs", d:"Seeking 'first-time-right' commercialisation strategies." },
-    { icon:"⚙️", t:"Working Professionals",    d:"Specialised training in Embedded Systems & Product Design." },
-  ];
+function SlideAudience({ accent, hov, setHov, cms }) {
+  const body = cms?.body || "Built for builders at every stage.";
+  const cards = (cms?.audiences && cms.audiences.length > 0)
+    ? cms.audiences.map((a) => ({ icon: a.icon, t: a.title, d: a.description }))
+    : [
+        { icon:"🎓", t:"Final-Year Students",      d:"Keen on building world-class hardware products." },
+        { icon:"⚡", t:"Recent Graduates",          d:"Looking to boost employability through specialised upskilling." },
+        { icon:"🚀", t:"Startups & Entrepreneurs", d:"Seeking 'first-time-right' commercialisation strategies." },
+        { icon:"⚙️", t:"Working Professionals",    d:"Specialised training in Embedded Systems & Product Design." },
+      ];
   return (
     <div className="ip-content">
-      <p className="ip-body">Built for builders at every stage.</p>
+      <p className="ip-body">{body}</p>
       <div className="ip-aud-grid">
         {cards.map((c,i) => (
           <div key={i} className="ip-aud"
@@ -420,10 +458,29 @@ function SlideAudience({ accent, hov, setHov }) {
 }
 
 // ── Slide 05 — Testimonials ───────────────────────────────────────────────────
-function SlideTestimonials({ accent }) {
+// Map a media reference (string id, undefined, or populated object) to a usable URL.
+function mediaUrl(m) {
+  if (!m) return null;
+  if (typeof m === "string") return null; // depth=0 — only the id, no URL yet
+  const u = m.url || m.thumbnailURL;
+  if (!u) return null;
+  return u.startsWith("http") ? u : `${CMS_API}${u}`;
+}
+
+function SlideTestimonials({ accent, cms }) {
   const [active,  setActive]  = useState(null);
   const [current, setCurrent] = useState(0);
   const trackRef = useRef(null);
+
+  const body = cms?.body || "Real builders. Real outcomes. Straight from the cohort.";
+  const testimonials = (cms?.testimonials && cms.testimonials.length > 0)
+    ? cms.testimonials.map((t) => ({
+        name:   t.name,
+        batch:  t.batch,
+        src:    mediaUrl(t.video),
+        poster: mediaUrl(t.poster),
+      })).filter((t) => t.src)
+    : TESTIMONIALS;
 
   function scrollTo(i) {
     const track = trackRef.current;
@@ -447,11 +504,11 @@ function SlideTestimonials({ accent }) {
 
   return (
     <div className="ip-testi-wrap">
-      <p className="ip-body">Real builders. Real outcomes. <strong>Straight from the cohort.</strong></p>
+      <p className="ip-body">{body}</p>
 
       {/* Desktop: 3-col grid */}
       <div className="ip-testi-grid">
-        {TESTIMONIALS.map((t, i) => (
+        {testimonials.map((t, i) => (
           <VideoCard key={i} testimonial={t} accent={accent} index={i}
             isActive={active===i} onPlay={()=>setActive(i)}/>
         ))}
@@ -460,7 +517,7 @@ function SlideTestimonials({ accent }) {
       {/* Mobile: horizontal snap carousel — never scrolls vertically */}
       <div className="ip-testi-carousel">
         <div className="ip-testi-track" ref={trackRef} onScroll={onTrackScroll}>
-          {TESTIMONIALS.map((t, i) => (
+          {testimonials.map((t, i) => (
             <div key={i} className="ip-testi-slide">
               <VideoCard testimonial={t} accent={accent} index={i}
                 isActive={active===i} onPlay={()=>setActive(i)}/>
@@ -469,7 +526,7 @@ function SlideTestimonials({ accent }) {
         </div>
 
         <div className="ip-testi-dots">
-          {TESTIMONIALS.map((_, i) => (
+          {testimonials.map((_, i) => (
             <button key={i}
               className={"ip-testi-dot" + (i===current ? " ip-testi-dot--active" : "")}
               style={i===current ? {background:accent, boxShadow:`0 0 8px ${accent}88`} : {}}
@@ -572,30 +629,57 @@ function VideoCard({ testimonial, accent, index, isActive, onPlay }) {
 }
 
 // ── Slide 06 — Scholarships & Fellowships ────────────────────────────────────
-function SlideScholarships({ accent, hov, setHov }) {
+const COLOR_MAP = { teal: B.teal, magenta: B.magenta, gold: B.gold };
+
+function SlideScholarships({ accent, hov, setHov, cms }) {
+  const body          = cms?.body || "Financial support to make the program accessible from day one.";
+  const onboarding    = cms?.onboarding || {};
+  const fellowship    = cms?.fellowship || {};
+
+  const onboardingTitle    = onboarding.title    || "Onboarding Scholarship";
+  const onboardingSubtitle = onboarding.subtitle || "GPA-based scholarship reducing your effective Program Fee · Base Fee: ₹1,25,000 + GST";
+  const tiers = (onboarding.tiers && onboarding.tiers.length > 0)
+    ? onboarding.tiers.map((t) => ({
+        gpa: t.criterion,
+        fee: t.feeAfter,
+        label: "+ GST",
+        tag: t.scholarshipAmount,
+        color: COLOR_MAP[t.color] || B.teal,
+      }))
+    : [
+        { gpa:"GPA ≥ 8.0",          fee:"₹75,000", label:"+ GST", tag:"₹50,000 Scholarship", color:B.teal    },
+        { gpa:"GPA ≥ 7.5",          fee:"₹85,000", label:"+ GST", tag:"₹40,000 Scholarship", color:B.teal    },
+        { gpa:"Women · GPA ≥ 7.5",  fee:"₹75,000", label:"+ GST", tag:"₹50,000 Scholarship", color:B.magenta },
+      ];
+
+  const fellowshipTitle    = fellowship.title    || "CiPD Product Development Fellowship";
+  const fellowshipSubtitle = fellowship.subtitle || "Performance-based monthly stipend for regular & actively engaged participants · up to ₹1.5 Lakhs total";
+  const stipendStats = (fellowship.stats && fellowship.stats.length > 0)
+    ? fellowship.stats
+    : [
+        { label:"Monthly Stipend",  value:"₹15,000",   note:"From month 3 onwards"      },
+        { label:"Duration",         value:"10 months", note:"6 months post-program"     },
+        { label:"Total Support",    value:"₹1.5 L",    note:"Maximum total value"       },
+      ];
+  const eligibility = fellowship.eligibilityNote || "All regular and actively engaged participants. Stipend begins from the 3rd month and can extend up to 6 months post-program.";
+
   return (
     <div className="ip-eco-wrap">
 
-      <p className="ip-body" style={{marginBottom:0}}>
-        Financial support to make the programme <strong>accessible from day one</strong>.
-      </p>
+      <p className="ip-body" style={{marginBottom:0}}>{body}</p>
 
-      {/* ── GPA-based Scholarships ── */}
+      {/* ── Onboarding Scholarship ── */}
       <div className="ip-tier">
         <div className="ip-tier-header" style={{borderLeftColor:B.teal}}>
           <span className="ip-tier-num" style={{color:B.teal}}>01</span>
           <div>
-            <span className="ip-tier-title" style={{color:B.teal}}>Direct Scholarships & Onboarding Discounts</span>
-            <span className="ip-tier-sub">Targeted fellowships up to ₹2 Lakhs + GPA-based fee reductions</span>
+            <span className="ip-tier-title" style={{color:B.teal}}>{onboardingTitle}</span>
+            <span className="ip-tier-sub">{onboardingSubtitle}</span>
           </div>
         </div>
 
         <div className="ip-tier-cards">
-          {[
-            { gpa:"GPA ≥ 8.0", fee:"₹75,000", label:"+ GST", tag:"Highest Discount",  color:B.teal    },
-            { gpa:"GPA ≥ 7.5", fee:"₹85,000", label:"+ GST", tag:"Merit Discount",    color:B.teal    },
-            { gpa:"Women · GPA ≥ 7.5", fee:"₹75,000", label:"+ GST", tag:"Women in Tech", color:B.magenta },
-          ].map((d,i) => (
+          {tiers.map((d,i) => (
             <div key={i} className="ip-gpa-card"
               style={{
                 "--i": i,
@@ -608,28 +692,24 @@ function SlideScholarships({ accent, hov, setHov }) {
               <span className="ip-gpa-tag" style={{color:d.color, borderColor:`${d.color}44`}}>{d.tag}</span>
               <span className="ip-gpa-crit">{d.gpa}</span>
               <span className="ip-gpa-fee" style={{color:d.color}}>{d.fee}<sup style={{fontSize:"0.5em",opacity:.6}}>{d.label}</sup></span>
-              <span className="ip-gpa-base">Base fee: ₹1,25,000</span>
+              <span className="ip-gpa-base">Program Fee after scholarship</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ── CiPD Product Fellowship (stipend) ── */}
+      {/* ── CiPD Product Development Fellowship (performance based) ── */}
       <div className="ip-tier">
         <div className="ip-tier-header" style={{borderLeftColor:B.magenta}}>
           <span className="ip-tier-num" style={{color:B.magenta}}>02</span>
           <div>
-            <span className="ip-tier-title" style={{color:B.magenta}}>CiPD Product Fellowship</span>
-            <span className="ip-tier-sub">Monthly stipend for all participants · up to ₹1.5 Lakhs total</span>
+            <span className="ip-tier-title" style={{color:B.magenta}}>{fellowshipTitle}</span>
+            <span className="ip-tier-sub">{fellowshipSubtitle}</span>
           </div>
         </div>
 
         <div className="ip-stipend-row">
-          {[
-            { label:"Monthly Stipend",   value:"₹15,000",  note:"From month 3 onwards", color:B.magenta },
-            { label:"Duration",          value:"10 months", note:"6 months post-programme", color:B.magenta },
-            { label:"Total Support",     value:"₹1.5 L",   note:"Maximum total value", color:B.magenta },
-          ].map((s,i) => (
+          {stipendStats.map((s,i) => (
             <div key={i} className="ip-stipend-stat" style={{"--i":i}}>
               <span className="ip-stipend-val" style={{color:B.magenta}}>{s.value}</span>
               <span className="ip-stipend-label">{s.label}</span>
@@ -637,8 +717,7 @@ function SlideScholarships({ accent, hov, setHov }) {
             </div>
           ))}
           <div className="ip-stipend-note-card" style={{borderColor:`${B.magenta}33`, background:`${B.magenta}08`}}>
-            <span style={{color:B.magenta, fontWeight:700}}>Eligibility:</span> All enrolled participants.
-            Stipend begins from month 3 to ensure commitment, and can extend 6 months after completion.
+            <span style={{color:B.magenta, fontWeight:700}}>Eligibility:</span> {eligibility}
           </div>
         </div>
       </div>
@@ -648,50 +727,40 @@ function SlideScholarships({ accent, hov, setHov }) {
 }
 
 // ── Slide 07 — Grants & Incubation ───────────────────────────────────────────
-function SlideGrants({ accent, hov, setHov }) {
+function SlideGrants({ accent, hov, setHov, cms }) {
+  const body            = cms?.body            || "For participants turning their product into a startup.";
+  const sectionTitle    = cms?.sectionTitle    || "Startup Grants & Incubation";
+  const sectionSubtitle = cms?.sectionSubtitle || "Funding and incubation support for cohort startups";
+  const grants = (cms?.grants && cms.grants.length > 0)
+    ? cms.grants.map((g) => ({
+        name: g.name,
+        amount: g.amount,
+        desc: g.description,
+        color: COLOR_MAP[g.color] || B.gold,
+      }))
+    : [
+        { name:"CiPD Seed Grant",            amount:"Up to ₹2 L",  desc:"For high-potential early-stage startups from the cohort.",                color:B.gold    },
+        { name:"READY (via IHFC)",           amount:"Up to ₹5 L",  desc:"₹25K/mo (graduates) or ₹12K/mo (B.Tech) + ₹5L consumables grant.",      color:B.teal    },
+        { name:"Entrepreneur in Residence",  amount:"₹4 L total",  desc:"₹30,000/month scholarship with up to ₹4 Lakhs in total funding support.", color:B.magenta },
+        { name:"NIDHI PRAYAS Scheme",        amount:"Up to ₹10 L", desc:"Significant startup funding for up to one year via the national scheme.", color:B.gold    },
+      ];
+
   return (
     <div className="ip-eco-wrap">
 
-      <p className="ip-body" style={{marginBottom:0}}>
-        For participants turning their product into a <strong>startup</strong>.
-      </p>
+      <p className="ip-body" style={{marginBottom:0}}>{body}</p>
 
       <div className="ip-tier">
         <div className="ip-tier-header" style={{borderLeftColor:B.gold}}>
           <span className="ip-tier-num" style={{color:B.gold}}>01</span>
           <div>
-            <span className="ip-tier-title" style={{color:B.gold}}>Startup Grants & Incubation</span>
-            <span className="ip-tier-sub">Funding and incubation support for cohort startups</span>
+            <span className="ip-tier-title" style={{color:B.gold}}>{sectionTitle}</span>
+            <span className="ip-tier-sub">{sectionSubtitle}</span>
           </div>
         </div>
 
         <div className="ip-grant-grid">
-          {[
-            {
-              name:"CiPD Seed Grant",
-              amount:"Up to ₹2 L",
-              desc:"For high-potential early-stage startups from the cohort.",
-              color:B.gold,
-            },
-            {
-              name:"READY (via IHFC)",
-              amount:"Up to ₹5 L",
-              desc:"₹25K/mo (graduates) or ₹12K/mo (B.Tech) + ₹5L consumables grant.",
-              color:B.teal,
-            },
-            {
-              name:"Entrepreneur in Residence",
-              amount:"₹4 L total",
-              desc:"₹30,000/month scholarship with up to ₹4 Lakhs in total funding support.",
-              color:B.magenta,
-            },
-            {
-              name:"NIDHI PRAYAS Scheme",
-              amount:"Up to ₹10 L",
-              desc:"Significant startup funding for up to one year via the national scheme.",
-              color:B.gold,
-            },
-          ].map((g,i) => (
+          {grants.map((g,i) => (
             <div key={i} className="ip-grant-card"
               style={{
                 "--i": i,
@@ -714,31 +783,46 @@ function SlideGrants({ accent, hov, setHov }) {
 }
 
 // ── Slide 08 — CTA ────────────────────────────────────────────────────────────
-function SlideCTA({ accent, hov, setHov }) {
+function SlideCTA({ accent, hov, setHov, onEvents, cms, settings }) {
+  // CMS slide08 values take priority; Settings global is a fallback for applyUrl.
+  const cohortLabel       = cms?.cohortLabel       || "Next Cohort";
+  const cohortDate        = cms?.cohortDate        || "TBA — 2026";
+  const limitedSeatsLabel = cms?.limitedSeatsLabel || "Limited Seats";
+  const deadlineNote      = cms?.deadlineNote      || "Each cohort is capped to ensure hands-on mentorship. Final Application Submission Deadline: 27 May 2026.";
+  const applyUrl          = cms?.applyUrl
+                         || settings?.applyUrl
+                         || "https://docs.google.com/forms/d/e/1FAIpQLScnTQdnzGalnaqckHoUXKlMnYAXiHdn2qpATLaJCVtRCjMCOQ/viewform";
+
   return (
     <div className="ip-content">
       <div className="ip-invest">
-        {/* Cohort date — update when confirmed */}
         <div>
-          <div className="ip-inv-lbl">Next Cohort</div>
-          <div className="ip-inv-date" style={{color:B.gold}}>TBA — 2026</div>
+          <div className="ip-inv-lbl">{cohortLabel}</div>
+          <div className="ip-inv-date" style={{color:B.gold}}>{cohortDate}</div>
         </div>
       </div>
 
       <div className="ip-cta-note" style={{borderLeftColor:accent}}>
-        <span className="ip-cta-note-label" style={{color:accent}}>Limited Seats</span>
-        <p className="ip-card-text">Each cohort is capped to ensure hands-on mentorship. <b>Regular application open till 27th April 2026.</b></p>
+        <span className="ip-cta-note-label" style={{color:accent}}>{limitedSeatsLabel}</span>
+        <p className="ip-card-text">{deadlineNote}</p>
       </div>
 
       <div className="ip-btns">
         <button
           className="ip-btn-p"
           style={{"--a":B.teal,"--b":B.gold}}
-          onClick={() => window.open("https://docs.google.com/forms/d/e/1FAIpQLScnTQdnzGalnaqckHoUXKlMnYAXiHdn2qpATLaJCVtRCjMCOQ/viewform","_blank","noopener")}
+          onClick={() => window.open(applyUrl, "_blank", "noopener")}
         >
           Apply Now
         </button>
-        <button className="ip-btn-s">Download Brochure</button>
+        <button
+          className="ip-btn-s"
+          onClick={() => {
+            if (onEvents) onEvents();
+          }}
+        >
+          Scroll to Events
+        </button>
       </div>
     </div>
   );

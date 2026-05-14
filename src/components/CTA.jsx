@@ -145,7 +145,7 @@ export default function FloatingCTA({
             </svg>
 
             <div className="fcta-brand-text">
-              <span className="fcta-programme">iPD-CP</span>
+              <span className="fcta-program">iPD-CP</span>
               <span className="fcta-institute">IIIT Delhi · Intensive Product Development</span>
             </div>
           </div>
@@ -155,11 +155,11 @@ export default function FloatingCTA({
 
           {/* ── SECTION 2: Deadline ── */}
           <div className="fcta-deadline">
-            <span className="fcta-dl-eyebrow" style={{ color: '#FFB300' }}>Regular Application Open Till</span>
+            <span className="fcta-dl-eyebrow" style={{ color: '#FFB300' }}>Final Application Submission Deadline</span>
 
             <div className="fcta-tba-wrap">
               <span className="fcta-tba-dot"/>
-              <span className="fcta-tba">27 April 2026</span>
+              <span className="fcta-tba">27 May 2026</span>
             </div>
           </div>
 
@@ -458,7 +458,7 @@ const CSS = `
     flex-direction: column;
     gap: 3px;
   }
-  .fcta-programme {
+  .fcta-program {
     font-family: 'Montserrat', sans-serif;
     font-size: 17px;
     font-weight: 900;
@@ -719,7 +719,7 @@ const CSS = `
     /* Brand shrinks */
     .fcta-brand   { gap: 10px; }
     .fcta-institute { display: none; }
-    .fcta-programme { font-size: 15px; }
+    .fcta-program { font-size: 15px; }
 
     /* Deadline goes centred in the flex-1 col */
     .fcta-deadline {
@@ -763,7 +763,7 @@ const CSS = `
       width: 100%;
     }
     .fcta-icon { width: 26px; height: 26px; }
-    .fcta-programme  { font-size: 14px; letter-spacing: 0.04em; }
+    .fcta-program  { font-size: 14px; letter-spacing: 0.04em; }
     .fcta-institute  { display: none; }
 
     /* Bottom row: button full-width */
@@ -815,7 +815,7 @@ const CSS = `
     }
     .fcta-icon { display: none; }
     .fcta-brand-text { gap: 1px; }
-    .fcta-programme {
+    .fcta-program {
       font-size: 13px;
       letter-spacing: 0.03em;
       white-space: nowrap;

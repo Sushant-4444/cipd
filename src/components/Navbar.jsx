@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 //
 // Props:
 //   logoSrc        {string}    path to your logo PNG  e.g. "/logo.png"
-//   currentPhase   {string}    current app phase: "hero" | "story" | "ipdcp"
+//   currentPhase   {string}    current app phase: "hero" | "story" | "ipdcp" | "events"
 //   onNavigate     {function}  (phase) => void  — called when a nav link is clicked
 //   onApply        {function}  called when ghost CTA is clicked
 //   applyUrl       {string}    fallback href if no onApply
@@ -32,6 +32,7 @@ const LINKS = [
   { label: "Home",      phase: "hero",  id: "home"    },
   { label: "About",     phase: "story", id: "about"   },
   { label: "iPD-CP",    phase: "ipdcp", id: "ipdcp"   },
+  { label: "Events",    phase: "events", id: "events" },
 ];
 
 export default function Navbar({
@@ -226,7 +227,7 @@ export default function Navbar({
               </span>
             </button>
 
-            <p className="nb-drawer-tagline">IIIT Delhi · 24-Week Full-Time Programme</p>
+            <p className="nb-drawer-tagline">IIIT Delhi · 24-Week Full-Time Program</p>
           </div>
         </div>
 

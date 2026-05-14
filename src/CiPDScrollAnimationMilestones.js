@@ -246,6 +246,13 @@ export default function CiPDScrollStory({ onComplete }) {
                             <span className="ss-hint-text">Something is coming</span>
                             <span className="ss-hint-dot" />
                           </div>
+                          <button
+                            type="button"
+                            className="ss-ipdcp-cta"
+                            onClick={() => onComplete && onComplete()}
+                          >
+                            Enter iPD-CP
+                          </button>
                         </>
                       )}
                     </>
@@ -412,6 +419,31 @@ function styles(B) { return `
   .ss-hint-dot   { display:inline-block; width:5px; height:5px; border-radius:50%; background:linear-gradient(135deg,${B.teal},${B.magenta}); animation:ssDotBlink 1.6s ease-in-out infinite; }
   .ss-hint-dot:last-child { animation-delay:.8s; }
   .ss-hint-text  { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.35em; text-transform:uppercase; color:rgba(255,255,255,.42); font-weight:300; }
+  .ss-ipdcp-cta {
+    margin-top: 22px;
+    padding: 12px 22px;
+    border: 1px solid rgba(0,191,165,.35);
+    border-radius: 4px;
+    background: linear-gradient(135deg, rgba(0,191,165,.18), rgba(233,30,140,.14));
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease, background .25s ease;
+  }
+  .ss-ipdcp-cta:hover {
+    transform: translateY(-1px);
+    border-color: rgba(0,191,165,.65);
+    box-shadow: 0 10px 24px rgba(0,191,165,.18);
+    background: linear-gradient(135deg, rgba(0,191,165,.26), rgba(233,30,140,.2));
+  }
+  .ss-ipdcp-cta:focus-visible {
+    outline: 2px solid rgba(255,255,255,.7);
+    outline-offset: 3px;
+  }
 
   /* ── Hints ── */
   .ss-scroll-hint { position:absolute; bottom:40px; right:clamp(16px,3vw,48px); z-index:10; display:flex; flex-direction:column; align-items:center; gap:6px; transition:opacity .6s ease; }
