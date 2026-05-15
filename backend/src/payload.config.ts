@@ -5,6 +5,7 @@ import { sqliteAdapter } from "@payloadcms/db-sqlite";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import sharp from "sharp";
 
+import { Blogs } from "./collections/Blogs";
 import { Events } from "./collections/Events";
 import { Media } from "./collections/Media";
 import { Users } from "./collections/Users";
@@ -31,7 +32,7 @@ export default buildConfig({
       titleSuffix: " — CiPD CMS",
     },
   },
-  collections: [Events, Media, Users],
+  collections: [Events, Blogs, Media, Users],
   globals: [IpdcpPage, Settings],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || "dev-secret-change-me",

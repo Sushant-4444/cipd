@@ -29,10 +29,11 @@ const B = {
 
 // Map phase names → nav link ids
 const LINKS = [
-  { label: "Home",      phase: "hero",  id: "home"    },
-  { label: "About",     phase: "story", id: "about"   },
-  { label: "iPD-CP",    phase: "ipdcp", id: "ipdcp"   },
+  { label: "Home",      phase: "hero",   id: "home"   },
+  { label: "About",     phase: "story",  id: "about"  },
+  { label: "iPD-CP",    phase: "ipdcp",  id: "ipdcp"  },
   { label: "Events",    phase: "events", id: "events" },
+  { label: "Blog",      phase: "blogs",  id: "blogs"  },
 ];
 
 export default function Navbar({

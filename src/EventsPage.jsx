@@ -240,6 +240,16 @@ export default function EventsPage() {
     setSelectedEvent(null);
   }, []);
 
+  // While an event detail is open, mark the body so App.js's scroll-up-to-go-back
+  // gesture is suppressed (otherwise scrolling up on the detail page would
+  // navigate back to the iPD-CP phase).
+  useEffect(() => {
+    if (selectedEvent) {
+      document.body.dataset.modalOpen = "true";
+      return () => { delete document.body.dataset.modalOpen; };
+    }
+  }, [selectedEvent]);
+
   function handleSubscribe(e) {
     e.preventDefault();
     if (!subscribeEmail.trim()) return;

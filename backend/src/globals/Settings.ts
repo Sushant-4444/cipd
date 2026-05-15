@@ -177,6 +177,19 @@ export const Settings: GlobalConfig = {
       ],
     },
 
+    // ── Blogs page copy ──────────────────────────────────────────────────
+    {
+      label: "Blogs Page Copy",
+      type: "collapsible",
+      admin: { initCollapsed: true },
+      fields: [
+        { name: "blogsKicker",   type: "text",     defaultValue: "CiPD · IIIT Delhi" },
+        { name: "blogsHeadline", type: "text",     defaultValue: "Blog" },
+        { name: "blogsLead",     type: "textarea", defaultValue: "Ideas, research, and stories from the CiPD community." },
+        { name: "blogsBody",     type: "textarea", defaultValue: "Deep dives on intelligent product development, industry insights, and lessons from our cohorts. Written by researchers, mentors, and builders." },
+      ],
+    },
+
     // ── Events page copy ─────────────────────────────────────────────────
     {
       label: "Events Page Copy",

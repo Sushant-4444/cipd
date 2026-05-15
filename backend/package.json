@@ -12,7 +12,8 @@
     "lint": "cross-env NODE_OPTIONS=--no-deprecation next lint",
     "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
     "seed": "cross-env NODE_OPTIONS=--no-deprecation tsx src/seed.ts",
-    "seed:ipdcp": "cross-env NODE_OPTIONS=--no-deprecation tsx src/seed-ipdcp.ts"
+    "seed:ipdcp": "cross-env NODE_OPTIONS=--no-deprecation tsx src/seed-ipdcp.ts",
+    "seed:blogs": "cross-env NODE_OPTIONS=--no-deprecation tsx src/seed-blogs.ts"
   },
   "dependencies": {
     "@payloadcms/db-sqlite": "^3.0.0",

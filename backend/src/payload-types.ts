@@ -68,6 +68,7 @@ export interface Config {
   blocks: {};
   collections: {
     events: Event;
+    blogs: Blog;
     media: Media;
     users: User;
     'payload-kv': PayloadKv;
@@ -78,6 +79,7 @@ export interface Config {
   collectionsJoins: {};
   collectionsSelect: {
     events: EventsSelect<false> | EventsSelect<true>;
+    blogs: BlogsSelect<false> | BlogsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -320,6 +322,95 @@ export interface Media {
   };
 }
 /**
+ * Long-form blog content. Set Status = Published to make a post visible on the public site. Draft posts stay hidden.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "blogs".
+ */
+export interface Blog {
+  id: number;
+  title: string;
+  category: 'Insight' | 'Tutorial' | 'Announcement' | 'Case Study' | 'Interview' | 'Research' | 'Industry';
+  /**
+   * URL-friendly identifier. Leave blank to auto-derive from the title.
+   */
+  slug?: string | null;
+  status: 'draft' | 'published' | 'archived';
+  /**
+   * Set on ONE post — it becomes the hero on the blog index.
+   */
+  featured?: boolean | null;
+  author: string;
+  authorRole?: string | null;
+  /**
+   * Optional. If blank, the author's initials are shown in a circle.
+   */
+  authorPhoto?: (number | null) | Media;
+  /**
+   * Used for sorting. Date shown on the public site.
+   */
+  publishedDate: string;
+  /**
+   * Auto-estimated from body length on save. Override if you want.
+   */
+  readingTimeMinutes?: number | null;
+  /**
+   * 1–2 lines shown on blog cards and used as a meta description.
+   */
+  excerpt: string;
+  /**
+   * Featured image used as the card thumbnail and detail-page banner.
+   */
+  coverImage?: (number | null) | Media;
+  /**
+   * The article itself. Headings, paragraphs, lists, images inline, quotes, links.
+   */
+  body?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Free-text tags shown as pills on the detail page.
+   */
+  tags?:
+    | {
+        value: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Optional photo gallery on the detail page, after the body.
+   */
+  gallery?:
+    | {
+        image: number | Media;
+        caption?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Optional. Other posts shown at the bottom of this post's detail page.
+   */
+  relatedPosts?: (number | Blog)[] | null;
+  /**
+   * Editor-only notes. Not shown publicly.
+   */
+  internalNotes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * People who can log in to the CMS. Create the first user when you visit /admin for the first time.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -377,6 +468,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'events';
         value: number | Event;
+      } | null)
+    | ({
+        relationTo: 'blogs';
+        value: number | Blog;
       } | null)
     | ({
         relationTo: 'media';
@@ -485,6 +580,42 @@ export interface EventsSelect<T extends boolean = true> {
         image?: T;
         id?: T;
       };
+  internalNotes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "blogs_select".
+ */
+export interface BlogsSelect<T extends boolean = true> {
+  title?: T;
+  category?: T;
+  slug?: T;
+  status?: T;
+  featured?: T;
+  author?: T;
+  authorRole?: T;
+  authorPhoto?: T;
+  publishedDate?: T;
+  readingTimeMinutes?: T;
+  excerpt?: T;
+  coverImage?: T;
+  body?: T;
+  tags?:
+    | T
+    | {
+        value?: T;
+        id?: T;
+      };
+  gallery?:
+    | T
+    | {
+        image?: T;
+        caption?: T;
+        id?: T;
+      };
+  relatedPosts?: T;
   internalNotes?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -850,6 +981,10 @@ export interface Setting {
         id?: string | null;
       }[]
     | null;
+  blogsKicker?: string | null;
+  blogsHeadline?: string | null;
+  blogsLead?: string | null;
+  blogsBody?: string | null;
   eventsKicker?: string | null;
   eventsHeadline?: string | null;
   eventsLead?: string | null;
@@ -1046,6 +1181,10 @@ export interface SettingsSelect<T extends boolean = true> {
         url?: T;
         id?: T;
       };
+  blogsKicker?: T;
+  blogsHeadline?: T;
+  blogsLead?: T;
+  blogsBody?: T;
   eventsKicker?: T;
   eventsHeadline?: T;
   eventsLead?: T;

@@ -3,10 +3,11 @@ import CiPDHero        from "./HeroPage";
 import CiPDScrollStory from "./CiPDScrollAnimationMilestones";
 import IPDCPSection    from "./iPD-CP";
 import EventsPage      from "./EventsPage";
-import Navbar          from "./components/Navbar";          // ← NEW
-import FloatingCTA     from  "./components/CTA"; // ← NEW
+import BlogsPage       from "./BlogsPage";
+import Navbar          from "./components/Navbar";
+import FloatingCTA     from "./components/CTA";
 
-const PHASES = ["hero", "story", "ipdcp", "events"];
+const PHASES = ["hero", "story", "ipdcp", "events", "blogs"];
 
 export default function App() {
   const [phaseIdx, setPhaseIdx] = useState(0);
@@ -48,15 +49,20 @@ export default function App() {
     let armed = false;
     const armTimer = setTimeout(() => { armed = true; }, 800);
 
+    // Scroll-up-to-go-back must NOT fire when a modal-style overlay is
+    // active (e.g., an event detail page). Children opt in by setting
+    // document.body.dataset.modalOpen = "true".
+    const isModalOpen = () => document.body.dataset.modalOpen === "true";
+
     function onWheel(e) {
-      if (!armed || cooldown.current) return;
+      if (!armed || cooldown.current || isModalOpen()) return;
       if (window.scrollY <= 2 && e.deltaY < -30) goPrev();
     }
     let lastTY = 0;
     let touchStartTime = 0;
     function onTouchStart(e) { lastTY = e.touches[0].clientY; touchStartTime = Date.now(); }
     function onTouchEnd(e) {
-      if (!armed || cooldown.current) return;
+      if (!armed || cooldown.current || isModalOpen()) return;
       const dy = e.changedTouches[0].clientY - lastTY;
       const elapsed = Date.now() - touchStartTime;
       const velocity = Math.abs(dy) / Math.max(elapsed, 1) * 1000;
@@ -129,6 +135,7 @@ export default function App() {
       {phase === "story" && <CiPDScrollStory onComplete={goNext} />}
       {phase === "ipdcp" && <IPDCPSection onEvents={goToEvents} />}
       {phase === "events" && <EventsPage />}
+      {phase === "blogs" && <BlogsPage />}
 
       {/* ── Floating CTA — always visible ── */}
       <FloatingCTA
